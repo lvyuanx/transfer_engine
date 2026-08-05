@@ -134,3 +134,28 @@ def test_init_history_is_limited_to_recent_100(tmp_path):
             assert len(init["history"]) == 100
             assert init["history"][0]["text"] == "msg-20"
             assert init["history"][-1]["text"] == "msg-119"
+
+
+def test_system_message_persisted_and_broadcast(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    room = app.state.room
+    meta = room.system_message("上传了文件「a.txt」")
+    assert meta["user"] == "系统"
+    assert meta["text"] == "上传了文件「a.txt」"
+    assert "id" in meta and "ts" in meta
+    assert room.is_persistence_on() is True
+
+    app2 = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    history = app2.state.room.history()
+    assert history and history[-1]["user"] == "系统"
+    assert history[-1]["text"] == "上传了文件「a.txt」"
+
+
+def test_system_message_memory_mode_no_persist(tmp_path):
+    app = create_app(tmp_path / "shared")
+    room = app.state.room
+    meta = room.system_message("测试")
+    assert room.is_persistence_on() is False
+    assert meta["user"] == "系统"
+    assert meta["text"] == "测试"
+    assert room.history() == []

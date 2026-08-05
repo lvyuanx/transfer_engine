@@ -40,6 +40,12 @@ class ChatRoom:
     def set_name(self, ws: WebSocket, name: str) -> None:
         self._clients[ws] = name
 
+    def is_persistence_on(self) -> bool:
+        return self._store is not None
+
+    def system_message(self, text: str) -> dict:
+        return self.record_message("系统", text)
+
     def history(self, limit: int = 100) -> list[dict]:
         """Return recent persisted messages (empty when persistence is off)."""
         if self._store is None:
