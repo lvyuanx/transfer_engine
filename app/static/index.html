@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LAN Transfer · 局域网互传</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <header class="brand">
+          <span class="logo">◧</span>
+          <div>
+            <h1>LAN Transfer</h1>
+            <p>局域网互传 · 公共频道</p>
+          </div>
+        </header>
+        <nav class="tree-wrap" aria-label="共享文件">
+          <div class="tree-toolbar">
+            <span id="tree-title">共享目录</span>
+            <button id="refresh" class="icon-btn" title="刷新文件列表" aria-label="刷新文件列表">⟳</button>
+          </div>
+          <ul id="tree" class="tree"></ul>
+          <div id="tree-empty" class="empty hidden">共享目录是空的</div>
+        </nav>
+      </aside>
+
+      <main class="chat-pane">
+        <header class="chat-header">
+          <div class="header-left">
+            <span class="pulse-dot" aria-hidden="true"></span>
+            <strong id="online">0</strong>
+            <span>人在线</span>
+          </div>
+          <div class="header-right">
+            <span class="who">我:</span>
+            <input id="me" class="name-input" maxlength="32" autocomplete="off" placeholder="IP 默认用户名" />
+            <button id="rename" class="ghost-btn">改名</button>
+          </div>
+        </header>
+
+        <section id="messages" class="messages" aria-live="polite"></section>
+
+        <form id="composer" class="composer" autocomplete="off">
+          <input id="input" class="chat-input" maxlength="2000" placeholder="输入消息，回车发送" />
+          <button type="submit" class="send-btn">发送</button>
+        </form>
+      </main>
+    </div>
+    <script src="/app.js"></script>
+  </body>
+</html>
