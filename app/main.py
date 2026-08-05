@@ -22,6 +22,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 def create_app(
     shared_dir: Path | str = Path("./shared"),
     chat_db: Path | str | None = None,
+    max_upload_size_mb: int = 500,
 ) -> FastAPI:
     shared = Path(shared_dir).expanduser().resolve()
     shared.mkdir(parents=True, exist_ok=True)
@@ -32,6 +33,7 @@ def create_app(
     app.state.shared_dir = shared
     app.state.room = room
     app.state.chat_db = chat_db
+    app.state.max_upload_size_mb = max_upload_size_mb
 
     def system_message(text: str) -> None:
         room.system_message(text)
@@ -77,7 +79,13 @@ def create_app(
             uploaded: list[str] = []
             for f in files:
                 data = await f.read()
-                rel = save_upload(shared, dir, f.filename or "file", data)
+                rel = save_upload(
+                    shared,
+                    dir,
+                    f.filename or "file",
+                    data,
+                    max_size=max_upload_size_mb * 1024 * 1024,
+                )
                 uploaded.append(rel)
             names = "」「".join(f.filename or "file" for f in files)
             system_message(f"上传了文件「{names}」到「{dir or '根目录'}」")
@@ -218,6 +226,12 @@ def main() -> None:
         default="./data/chat.db",
         help="SQLite database for chat history (default: ./data/chat.db)",
     )
+    parser.add_argument(
+        "--max-upload-size",
+        type=int,
+        default=500,
+        help="单个上传文件大小上限（MB，默认 500）",
+    )
     args = parser.parse_args()
 
     import uvicorn
@@ -228,9 +242,14 @@ def main() -> None:
     print(f"  局域网访问: http://{get_lan_ip()}:{args.port}/")
     print(f"  共享目录:  {Path(args.shared_dir).resolve()}")
     print(f"  聊天记录:  {Path(args.chat_db).resolve()}")
+    print(f"  上传上限:  {args.max_upload_size} MB/文件")
     print("=" * 56)
     uvicorn.run(
-        create_app(args.shared_dir, chat_db=args.chat_db),
+        create_app(
+            args.shared_dir,
+            chat_db=args.chat_db,
+            max_upload_size_mb=args.max_upload_size,
+        ),
         host=args.host,
         port=args.port,
     )

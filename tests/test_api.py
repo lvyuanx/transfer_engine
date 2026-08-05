@@ -148,6 +148,19 @@ def test_upload_failure_returns_400_and_system_message(tmp_path):
         assert msgs and msgs[-1]["text"].startswith("上传失败")
 
 
+def test_upload_size_limit_applies(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db", max_upload_size_mb=1)
+    with TestClient(app) as client:
+        resp = client.post(
+            "/api/upload?dir=",
+            files={"files": ("big.bin", b"x" * (1024 * 1024 + 1), "application/octet-stream")},
+        )
+        assert resp.status_code == 400
+        assert "大小" in resp.json()["detail"]
+        msgs = client.get("/api/messages").json()["messages"]
+        assert msgs and "上传失败" in msgs[-1]["text"]
+
+
 def test_create_dir_api_and_system_message(tmp_path):
     app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
     with TestClient(app) as client:
