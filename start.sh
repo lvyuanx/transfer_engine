@@ -30,8 +30,46 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if ! command -v uv >/dev/null 2>&1; then
+# 找到 uv 的完整路径。sudo 下 PATH 通常不含用户的 ~/.local/bin，
+# 所以需要探测常见安装位置。
+find_uv() {
+  if command -v uv >/dev/null 2>&1; then
+    command -v uv
+    return 0
+  fi
+
+  local candidates=()
+  # sudo 时优先找发起 sudo 的用户安装的 uv
+  if [[ -n "${SUDO_USER:-}" ]]; then
+    local user_home
+    user_home="$(getent passwd "$SUDO_USER" 2>/dev/null | cut -d: -f6 || true)"
+    if [[ -n "$user_home" ]]; then
+      candidates+=("$user_home/.local/bin/uv" "$user_home/.cargo/bin/uv")
+    fi
+  fi
+
+  candidates+=(
+    "$HOME/.local/bin/uv"
+    "$HOME/.cargo/bin/uv"
+    /usr/local/bin/uv
+    /opt/homebrew/bin/uv
+    /usr/bin/uv
+  )
+
+  local c
+  for c in "${candidates[@]}"; do
+    if [[ -x "$c" ]]; then
+      echo "$c"
+      return 0
+    fi
+  done
+  return 1
+}
+
+UV="$(find_uv || true)"
+if [[ -z "$UV" ]]; then
   echo "错误: 未找到 uv，请先安装 https://docs.astral.sh/uv/" >&2
+  echo "如果正在使用 sudo，也可以先执行：sudo ln -s "$(command -v uv)" /usr/local/bin/uv" >&2
   exit 1
 fi
 
@@ -59,7 +97,7 @@ if curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null 2>&1; then
 fi
 
 echo "正在后台启动 LAN Transfer (端口 $PORT)..."
-nohup sh -c 'exec uv run python -m app.main "$@"' sh "${APP_ARGS[@]}" >>"$LOG_FILE" 2>&1 &
+nohup "$UV" run python -m app.main "${APP_ARGS[@]}" >>"$LOG_FILE" 2>&1 &
 PID=$!
 echo "$PID" > "$PID_FILE"
 

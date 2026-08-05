@@ -11,6 +11,10 @@ const renameBtn = $("rename");
 const refreshBtn = $("refresh");
 const uploadRootBtn = $("upload-root");
 const newDirBtn = $("new-dir");
+const uploadsEl = $("uploads");
+const uploadListEl = $("upload-list");
+const uploadsTitleEl = $("uploads-title");
+const uploadsClearBtn = $("uploads-clear");
 const composer = $("composer");
 const input = $("input");
 
@@ -21,6 +25,7 @@ let lastId = 0;
 let oldestId = 0;
 let hasMoreHistory = false;
 let loadingOlder = false;
+let uploadBusy = false;
 const expanded = new Set();
 
 /* ---------- files ---------- */
@@ -36,6 +41,41 @@ function fmtSize(bytes) {
     i += 1;
   }
   return value.toFixed(value >= 100 ? 0 : 1) + " " + units[i];
+}
+
+function fmtSpeed(bytesPerSec) {
+  if (!isFinite(bytesPerSec) || bytesPerSec <= 0) return "";
+  return fmtSize(bytesPerSec) + "/s";
+}
+
+function fmtEta(seconds) {
+  if (!isFinite(seconds) || seconds < 1) return "";
+  if (seconds < 60) return "约 " + Math.ceil(seconds) + " 秒";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    const rest = Math.ceil(seconds % 60);
+    return "约 " + minutes + " 分" + (rest > 0 ? " " + rest + " 秒" : "");
+  }
+  const hours = Math.floor(minutes / 60);
+  const restMin = minutes % 60;
+  return "约 " + hours + " 小时" + (restMin > 0 ? " " + restMin + " 分" : "");
+}
+
+function makeSpeedTracker() {
+  let lastLoaded = 0;
+  let lastTs = null;
+  let speed = 0;
+  return function (loaded) {
+    const now = performance.now();
+    if (lastTs != null && now > lastTs) {
+      const dt = (now - lastTs) / 1000;
+      const instant = (loaded - lastLoaded) / dt;
+      speed = speed === 0 ? instant : speed * 0.7 + instant * 0.3;
+    }
+    lastLoaded = loaded;
+    lastTs = now;
+    return speed;
+  };
 }
 
 function esc(text) {
@@ -177,17 +217,143 @@ refreshBtn.addEventListener("click", loadRoot);
 
 /* ---------- file operations ---------- */
 
+function setUploadsTitle(done, total, failed) {
+  const label = done >= total ? "上传完成" : "正在上传";
+  let text = label + " " + done + "/" + total;
+  if (failed > 0) text += "（" + failed + " 个失败）";
+  uploadsTitleEl.textContent = text;
+}
+
+function createUploadItem(file) {
+  const item = document.createElement("div");
+  item.className = "upload-item";
+
+  const meta = document.createElement("div");
+  meta.className = "upload-meta";
+  const name = document.createElement("span");
+  name.className = "upload-name";
+  name.textContent = file.name;
+  name.title = file.name;
+  const percent = document.createElement("span");
+  percent.className = "upload-percent";
+  percent.textContent = "0%";
+  meta.append(name, percent);
+
+  const barWrap = document.createElement("div");
+  barWrap.className = "progress";
+  const bar = document.createElement("div");
+  bar.className = "progress-bar";
+  barWrap.appendChild(bar);
+
+  const sub = document.createElement("div");
+  sub.className = "upload-sub";
+  const size = document.createElement("span");
+  size.className = "upload-size";
+  size.textContent = "0 B / " + fmtSize(file.size);
+  const speed = document.createElement("span");
+  speed.className = "upload-speed";
+  const eta = document.createElement("span");
+  eta.className = "upload-eta";
+  sub.append(size, speed, eta);
+
+  item.append(meta, barWrap, sub);
+
+  item.update = function (loaded, total, speedVal, pct) {
+    const shownLoaded = Math.min(loaded, file.size);
+    percent.textContent = Math.floor(pct) + "%";
+    bar.style.width = pct + "%";
+    size.textContent = fmtSize(shownLoaded) + " / " + fmtSize(file.size);
+    speed.textContent = fmtSpeed(speedVal);
+    const remain = Math.max(0, file.size - shownLoaded);
+    eta.textContent = speedVal > 0 ? fmtEta(remain / speedVal) : "";
+  };
+
+  item.finish = function (ok, errMsg) {
+    item.classList.add(ok ? "done" : "error");
+    percent.textContent = ok ? "100%" : "失败";
+    bar.style.width = ok ? "100%" : "100%";
+    speed.textContent = ok ? "完成" : "";
+    eta.textContent = ok ? "" : errMsg || "上传失败";
+  };
+
+  return item;
+}
+
+function uploadOne(dir, file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const fd = new FormData();
+    fd.append("files", file);
+    const url = "/api/upload" + (dir ? "?dir=" + encodeURIComponent(dir) : "");
+    xhr.open("POST", url);
+    const track = makeSpeedTracker();
+    xhr.upload.onprogress = (e) => {
+      if (!e.lengthComputable) return;
+      const pct = Math.min(100, (e.loaded / e.total) * 100);
+      onProgress(e.loaded, e.total, track(e.loaded), pct);
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+        return;
+      }
+      let msg = "HTTP " + xhr.status;
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (data && data.detail) msg = data.detail;
+      } catch (_) {
+        // keep generic message
+      }
+      reject(new Error(msg));
+    };
+    xhr.onerror = () => reject(new Error("网络错误"));
+    xhr.send(fd);
+  });
+}
+
 async function uploadFiles(dir, fileList) {
-  if (!fileList || !fileList.length) return;
-  const fd = new FormData();
-  for (const f of fileList) fd.append("files", f);
-  const url = "/api/upload" + (dir ? "?dir=" + encodeURIComponent(dir) : "");
-  const resp = await fetch(url, { method: "POST", body: fd });
-  if (!resp.ok) {
-    const detail = await resp.json().catch(() => ({}));
-    throw new Error(detail.detail || "HTTP " + resp.status);
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  if (uploadBusy) {
+    alert("已有上传正在进行，请等待完成");
+    return;
   }
-  await loadRoot();
+  uploadBusy = true;
+
+  // 清理已结束的旧条目，保留进行中的
+  const doneItems = uploadListEl.querySelectorAll(".upload-item.done, .upload-item.error");
+  doneItems.forEach((el) => el.remove());
+
+  uploadsEl.classList.remove("hidden");
+  const items = files.map((f) => createUploadItem(f));
+  const frag = document.createDocumentFragment();
+  items.forEach((el) => frag.appendChild(el));
+  uploadListEl.appendChild(frag);
+
+  const total = files.length;
+  let done = 0;
+  let failed = 0;
+  setUploadsTitle(done, total, failed);
+
+  try {
+    for (let i = 0; i < files.length; i++) {
+      try {
+        await uploadOne(dir, files[i], (loaded, totalBytes, speedVal, pct) => {
+          items[i].update(loaded, totalBytes, speedVal, pct);
+        });
+        items[i].finish(true);
+      } catch (err) {
+        failed += 1;
+        items[i].finish(false, err.message);
+      } finally {
+        done += 1;
+        setUploadsTitle(done, total, failed);
+      }
+    }
+  } finally {
+    uploadBusy = false;
+    await loadRoot();
+  }
 }
 
 function pickAndUpload(dir) {
@@ -200,9 +366,7 @@ function pickAndUpload(dir) {
   input.click();
 }
 
-async function createDir(parent) {
-  const name = prompt(parent ? "在「" + parent + "」下新建文件夹名称" : "新文件夹名称");
-  if (!name) return;
+async function doCreateDir(parent, name) {
   const resp = await fetch("/api/dirs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -210,8 +374,7 @@ async function createDir(parent) {
   });
   if (!resp.ok) {
     const detail = await resp.json().catch(() => ({}));
-    alert(detail.detail || "创建失败");
-    return;
+    throw new Error(detail.detail || "创建失败");
   }
   if (parent) {
     const node = findNodeByPath(parent);
@@ -220,6 +383,96 @@ async function createDir(parent) {
   } else {
     await loadRoot();
   }
+}
+
+function createDir(parent) {
+  const title = parent ? "在「" + parent + "」下新建文件夹" : "新建文件夹";
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+
+  const modal = document.createElement("div");
+  modal.className = "modal";
+
+  const heading = document.createElement("h2");
+  heading.className = "modal-title";
+  heading.textContent = title;
+
+  const input = document.createElement("input");
+  input.className = "modal-input";
+  input.type = "text";
+  input.placeholder = "文件夹名称";
+  input.maxLength = 100;
+  input.autocomplete = "off";
+  input.spellcheck = false;
+
+  const hint = document.createElement("p");
+  hint.className = "modal-hint";
+  hint.textContent = "输入文件夹名称，不支持 / 和开头为 . 的名称";
+
+  const actions = document.createElement("div");
+  actions.className = "modal-actions";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "ghost-btn";
+  cancelBtn.textContent = "取消";
+
+  const okBtn = document.createElement("button");
+  okBtn.type = "button";
+  okBtn.className = "primary-btn";
+  okBtn.textContent = "创建";
+
+  actions.append(cancelBtn, okBtn);
+  modal.append(heading, input, hint, actions);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    overlay.remove();
+    document.removeEventListener("keydown", onKey);
+  };
+
+  const submit = async () => {
+    const name = input.value.trim();
+    if (!name) {
+      hint.textContent = "请输入文件夹名称";
+      hint.classList.add("modal-error");
+      input.focus();
+      return;
+    }
+    okBtn.disabled = true;
+    okBtn.textContent = "创建中…";
+    try {
+      await doCreateDir(parent, name);
+      close();
+    } catch (err) {
+      okBtn.disabled = false;
+      okBtn.textContent = "创建";
+      hint.textContent = err.message || "创建失败";
+      hint.classList.add("modal-error");
+      input.select();
+      input.focus();
+    }
+  };
+
+  const onKey = (ev) => {
+    if (ev.key === "Escape") {
+      ev.preventDefault();
+      close();
+    } else if (ev.key === "Enter") {
+      ev.preventDefault();
+      submit();
+    }
+  };
+
+  cancelBtn.addEventListener("click", close);
+  okBtn.addEventListener("click", submit);
+  document.addEventListener("keydown", onKey);
+  input.focus();
 }
 
 async function removeEntry(path, type) {
@@ -272,8 +525,15 @@ function addRowButtons(row, entry) {
   row.appendChild(delBtn);
 }
 
+uploadsClearBtn.addEventListener("click", () => {
+  uploadListEl
+    .querySelectorAll(".upload-item.done, .upload-item.error")
+    .forEach((el) => el.remove());
+  if (!uploadListEl.children.length) uploadsEl.classList.add("hidden");
+});
+
 uploadRootBtn.addEventListener("click", () => pickAndUpload(""));
-newDirBtn.addEventListener("click", createDir);
+newDirBtn.addEventListener("click", () => createDir(""));
 
 /* ---------- chat ---------- */
 

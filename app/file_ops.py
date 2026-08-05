@@ -5,7 +5,7 @@ from pathlib import Path
 
 from .file_tree import safe_resolve
 
-MAX_UPLOAD_SIZE = 500 * 1024 * 1024
+MAX_UPLOAD_SIZE = 2048 * 1024 * 1024
 
 
 def _valid_name(name: str) -> str:

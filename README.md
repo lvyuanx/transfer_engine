@@ -38,7 +38,7 @@ uv run python -m app.main --port 9000 --shared-dir /path/to/share --chat-db /pat
 聊天记录默认保存在 `./data/chat.db`（SQLite），30 天前的消息会自动清理；传入
 `--chat-db` 可自定义位置。数据库位于共享目录之外，不会被文件树下载。
 
-单个上传文件默认上限 500 MB，可用 `--max-upload-size <MB>` 调整。
+单个上传文件默认上限 2G（2048 MB），可用 `--max-upload-size <MB>` 调整。
 
 ## 开发
 

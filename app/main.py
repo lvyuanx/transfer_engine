@@ -22,7 +22,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 def create_app(
     shared_dir: Path | str = Path("./shared"),
     chat_db: Path | str | None = None,
-    max_upload_size_mb: int = 500,
+    max_upload_size_mb: int = 2048,
 ) -> FastAPI:
     shared = Path(shared_dir).expanduser().resolve()
     shared.mkdir(parents=True, exist_ok=True)
@@ -230,8 +230,8 @@ def main() -> None:
     parser.add_argument(
         "--max-upload-size",
         type=int,
-        default=500,
-        help="单个上传文件大小上限（MB，默认 500）",
+        default=2048,
+        help="单个上传文件大小上限（MB，默认 2048，即 2G）",
     )
     args = parser.parse_args()
 
