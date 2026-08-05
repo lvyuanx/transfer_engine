@@ -35,8 +35,18 @@ def create_app(
     app.state.chat_db = chat_db
     app.state.max_upload_size_mb = max_upload_size_mb
 
-    def system_message(text: str) -> None:
-        room.system_message(text)
+    async def system_message(text: str) -> None:
+        meta = room.system_message(text)
+        await room.broadcast(
+            {
+                "type": "message",
+                "id": meta["id"],
+                "user": meta["user"],
+                "text": meta["text"],
+                "ts": meta["ts"],
+                "time": now(),
+            }
+        )
 
     @app.get("/api/health")
     async def health() -> dict:
@@ -88,10 +98,10 @@ def create_app(
                 )
                 uploaded.append(rel)
             names = "」「".join(f.filename or "file" for f in files)
-            system_message(f"上传了文件「{names}」到「{dir or '根目录'}」")
+            await system_message(f"上传了文件「{names}」到「{dir or '根目录'}」")
             return {"uploaded": uploaded}
         except Exception as exc:
-            system_message(f"上传失败：{exc}")
+            await system_message(f"上传失败：{exc}")
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.post("/api/dirs")
@@ -100,10 +110,10 @@ def create_app(
             name = str(payload.get("name", ""))
             parent = str(payload.get("parent", ""))
             path = create_dir(shared, name, parent=parent)
-            system_message(f"创建了目录「{path}」")
+            await system_message(f"创建了目录「{path}」")
             return {"path": path}
         except Exception as exc:
-            system_message(f"创建目录失败：{exc}")
+            await system_message(f"创建目录失败：{exc}")
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.delete("/api/files")
@@ -112,10 +122,10 @@ def create_app(
             target = safe_resolve(shared, path)
             kind = "目录" if target.is_dir() else "文件"
             deleted = delete_path(shared, path)
-            system_message(f"删除了{kind}「{path}」")
+            await system_message(f"删除了{kind}「{path}」")
             return {"deleted": deleted}
         except Exception as exc:
-            system_message(f"删除失败：{exc}")
+            await system_message(f"删除失败：{exc}")
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.get("/api/download")
@@ -125,7 +135,7 @@ def create_app(
             if not target.exists():
                 raise FileNotFoundError("文件不存在")
             kind = "目录" if target.is_dir() else "文件"
-            system_message(f"下载了{kind}「{path or '根目录'}」")
+            await system_message(f"下载了{kind}「{path or '根目录'}」")
 
             if target.is_dir():
                 fd, tmp_name = tempfile.mkstemp(suffix=".zip")
@@ -139,7 +149,7 @@ def create_app(
                 )
             return FileResponse(target, filename=target.name)
         except Exception as exc:
-            system_message(f"下载失败：{exc}")
+            await system_message(f"下载失败：{exc}")
             raise HTTPException(
                 status_code=404 if isinstance(exc, FileNotFoundError) else 400,
                 detail=str(exc),

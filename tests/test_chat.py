@@ -1,3 +1,5 @@
+from unittest.mock import AsyncMock
+
 from fastapi.testclient import TestClient
 
 from app.main import create_app
@@ -102,6 +104,23 @@ def test_chat_message_has_incrementing_id_and_ts(tmp_path):
             echoed = ws1.receive_json()
             assert echoed["id"] == 2
             assert echoed["ts"] >= msg["ts"]
+
+
+def test_file_operation_system_message_is_broadcast_immediately(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    room = app.state.room
+    room.broadcast = AsyncMock()
+    with TestClient(app, client=CLIENT) as client:
+        response = client.post("/api/dirs", json={"name": "docs"})
+
+    assert response.status_code == 200
+    room.broadcast.assert_awaited_once()
+    message = room.broadcast.await_args.args[0]
+    assert message["type"] == "message"
+    assert message["user"] == "系统"
+    assert message["text"] == "创建了目录「docs」"
+    assert message["id"] == 1
+    assert message["time"]
 
 
 def test_history_survives_app_restart(tmp_path):

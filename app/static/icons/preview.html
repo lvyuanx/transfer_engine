@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LAN Transfer · 图标方案预览</title>
+    <style>
+      :root {
+        --bg: #0b1017;
+        --panel: #10161f;
+        --line: #1e2a38;
+        --text: #d8e2ec;
+        --muted: #8194a8;
+        --accent: #6ee7c8;
+        --danger: #f28b82;
+        --warn: #e2b26a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(1100px 500px at 12% -8%, rgba(110, 231, 200, 0.10), transparent 60%),
+          radial-gradient(900px 460px at 95% 108%, rgba(226, 178, 106, 0.06), transparent 55%),
+          var(--bg);
+        color: var(--text);
+        font-family: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+        padding: 40px 32px 64px;
+      }
+      header { max-width: 1080px; margin: 0 auto 28px; }
+      h1 { margin: 0; font-size: 22px; letter-spacing: 0.04em; }
+      p.sub { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+      .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 16px; font-size: 12px; color: var(--muted); }
+      .legend span { display: inline-flex; align-items: center; gap: 7px; }
+      .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+      .grid {
+        max-width: 1080px; margin: 0 auto;
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px;
+      }
+      .card {
+        background: linear-gradient(180deg, rgba(110, 231, 200, 0.035), transparent 140px), var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 22px 12px 14px;
+        display: flex; flex-direction: column; align-items: center; gap: 10px;
+        transition: border-color 0.15s ease;
+      }
+      .card:hover { border-color: var(--line); }
+      .tile {
+        width: 64px; height: 64px;
+        display: flex; align-items: center; justify-content: center;
+        background: #0e141c;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      .tile img { width: 44px; height: 44px; display: block; }
+      .name { font-size: 13px; font-weight: 600; }
+      .use { font-size: 11px; color: var(--muted); text-align: center; line-height: 1.5; }
+      .logo-card .tile { width: 96px; height: 96px; }
+      .logo-card .tile img { width: 68px; height: 68px; }
+      section { max-width: 1080px; margin: 34px auto 0; }
+      h2 { font-size: 15px; color: var(--accent); letter-spacing: 0.06em; margin: 0 0 14px; }
+      .group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+      .foot { max-width: 1080px; margin: 40px auto 0; color: var(--muted); font-size: 12px; line-height: 1.8; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>LAN Transfer · 图标方案预览</h1>
+      <p class="sub">一套 24px 网格、1.8px 圆角描边、扁平线性风格的图标，配色取自现有主题变量，可直接替换当前界面里的 ⟳ / 🗀 / 🗎 / ◧ 字符。</p>
+      <div class="legend">
+        <span><i class="swatch" style="background:#6ee7c8"></i>强调色 accent</span>
+        <span><i class="swatch" style="background:#8194a8"></i>次要 muted</span>
+        <span><i class="swatch" style="background:#f28b82"></i>危险 danger</span>
+        <span><i class="swatch" style="background:#e2b26a"></i>警示 warn</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>品牌标识</h2>
+      <div class="group-grid">
+        <div class="card logo-card">
+          <div class="tile"><img src="logo.svg" alt="logo" /></div>
+          <div class="name">logo</div>
+          <div class="use">侧边栏品牌区，双向互传箭头</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="network.svg" alt="network" /></div>
+          <div class="name">network</div>
+          <div class="use">局域网 / 连接状态</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>文件操作</h2>
+      <div class="group-grid">
+        <div class="card">
+          <div class="tile"><img src="upload.svg" alt="upload" /></div>
+          <div class="name">upload</div>
+          <div class="use">上传到根目录 / 指定目录</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="download.svg" alt="download" /></div>
+          <div class="name">download</div>
+          <div class="use">文件 / 文件夹下载</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="refresh.svg" alt="refresh" /></div>
+          <div class="name">refresh</div>
+          <div class="use">刷新文件列表</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="new-folder.svg" alt="new-folder" /></div>
+          <div class="name">new-folder</div>
+          <div class="use">新建文件夹</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="delete.svg" alt="delete" /></div>
+          <div class="name">delete</div>
+          <div class="use">删除文件 / 文件夹</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>文件类型</h2>
+      <div class="group-grid">
+        <div class="card">
+          <div class="tile"><img src="folder.svg" alt="folder" /></div>
+          <div class="name">folder</div>
+          <div class="use">目录树中的文件夹</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="folder-open.svg" alt="folder-open" /></div>
+          <div class="name">folder-open</div>
+          <div class="use">展开状态的文件夹</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="file.svg" alt="file" /></div>
+          <div class="name">file</div>
+          <div class="use">普通文件</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="file-image.svg" alt="file-image" /></div>
+          <div class="name">file-image</div>
+          <div class="use">图片文件</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="file-archive.svg" alt="file-archive" /></div>
+          <div class="name">file-archive</div>
+          <div class="use">压缩包 / 归档</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="file-audio.svg" alt="file-audio" /></div>
+          <div class="name">file-audio</div>
+          <div class="use">音频文件</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="file-video.svg" alt="file-video" /></div>
+          <div class="name">file-video</div>
+          <div class="use">视频文件</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="chevron-right.svg" alt="chevron-right" /></div>
+          <div class="name">chevron-right</div>
+          <div class="use">目录折叠 / 展开箭头</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>聊天与状态</h2>
+      <div class="group-grid">
+        <div class="card">
+          <div class="tile"><img src="send.svg" alt="send" /></div>
+          <div class="name">send</div>
+          <div class="use">聊天发送按钮</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="chat.svg" alt="chat" /></div>
+          <div class="name">chat</div>
+          <div class="use">公共聊天标识</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="users.svg" alt="users" /></div>
+          <div class="name">users</div>
+          <div class="use">在线人数统计</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="rename.svg" alt="rename" /></div>
+          <div class="name">rename</div>
+          <div class="use">修改用户名</div>
+        </div>
+        <div class="card">
+          <div class="tile"><img src="clear.svg" alt="clear" /></div>
+          <div class="name">clear</div>
+          <div class="use">清除已完成上传项</div>
+        </div>
+      </div>
+    </section>
+
+    <p class="foot">
+      所有图标均为 SVG 矢量格式（viewBox 24 × 24，描边使用 currentColor，可用 CSS 覆盖颜色）。
+      单个文件位于 icons/ 目录，确认方案后可直接接入 app/static/app.js 与 index.html。
+    </p>
+  </body>
+</html>

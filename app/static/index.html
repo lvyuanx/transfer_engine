@@ -10,7 +10,7 @@
     <div class="app">
       <aside class="sidebar">
         <header class="brand">
-          <span class="logo">◧</span>
+          <span class="logo" data-icon="logo"></span>
           <div>
             <h1>LAN Transfer</h1>
             <p>局域网互传 · 公共频道</p>
@@ -20,9 +20,9 @@
           <div class="tree-toolbar">
             <span id="tree-title">共享目录</span>
             <div class="tree-actions">
-              <button id="upload-root" class="ghost-btn" title="上传到根目录">上传</button>
-              <button id="new-dir" class="ghost-btn" title="新建文件夹">新建文件夹</button>
-              <button id="refresh" class="icon-btn" title="刷新文件列表" aria-label="刷新文件列表">⟳</button>
+              <button id="upload-root" class="ghost-btn" title="上传到根目录" data-icon="upload">上传</button>
+              <button id="new-dir" class="ghost-btn" title="新建文件夹" data-icon="new-folder">新建文件夹</button>
+              <button id="refresh" class="icon-btn" title="刷新文件列表" aria-label="刷新文件列表" data-icon="refresh"></button>
             </div>
           </div>
           <ul id="tree" class="tree"></ul>
@@ -32,7 +32,7 @@
         <section id="uploads" class="uploads hidden" aria-label="上传进度">
           <div class="uploads-head">
             <span id="uploads-title">上传队列</span>
-            <button id="uploads-clear" class="uploads-clear" type="button" title="清除已完成的上传项">清除</button>
+            <button id="uploads-clear" class="uploads-clear" type="button" title="清除已完成的上传项" data-icon="clear">清除</button>
           </div>
           <div id="upload-list" class="upload-list"></div>
         </section>
@@ -42,13 +42,14 @@
         <header class="chat-header">
           <div class="header-left">
             <span class="pulse-dot" aria-hidden="true"></span>
+            <span class="header-users" data-icon="users" aria-hidden="true"></span>
             <strong id="online">0</strong>
             <span>人在线</span>
           </div>
           <div class="header-right">
             <span class="who">我:</span>
             <input id="me" class="name-input" maxlength="32" autocomplete="off" placeholder="IP 默认用户名" />
-            <button id="rename" class="ghost-btn">改名</button>
+            <button id="rename" class="ghost-btn" data-icon="rename">改名</button>
           </div>
         </header>
 
@@ -56,7 +57,7 @@
 
         <form id="composer" class="composer" autocomplete="off">
           <input id="input" class="chat-input" maxlength="2000" placeholder="输入消息，回车发送" />
-          <button type="submit" class="send-btn">发送</button>
+          <button type="submit" class="send-btn" data-icon="send">发送</button>
         </form>
       </main>
     </div>
