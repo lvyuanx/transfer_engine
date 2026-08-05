@@ -116,3 +116,71 @@ def test_messages_endpoint_memory_mode_is_empty(tmp_path):
         resp = client.get("/api/messages")
         assert resp.status_code == 200
         assert resp.json() == {"messages": [], "has_more": False}
+
+
+def test_upload_creates_file_and_system_message(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    (tmp_path / "shared" / "docs").mkdir(parents=True, exist_ok=True)
+    with TestClient(app) as client:
+        resp = client.post(
+            "/api/upload?dir=docs",
+            files={"files": ("hello.txt", b"hello", "text/plain")},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["uploaded"] == ["docs/hello.txt"]
+        assert (tmp_path / "shared" / "docs" / "hello.txt").read_bytes() == b"hello"
+        msgs = client.get("/api/messages").json()["messages"]
+        assert msgs and msgs[-1]["user"] == "系统"
+        assert "上传了文件" in msgs[-1]["text"]
+        assert "docs" in msgs[-1]["text"]
+
+
+def test_upload_failure_returns_400_and_system_message(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    with TestClient(app) as client:
+        resp = client.post(
+            "/api/upload?dir=missing",
+            files={"files": ("a.txt", b"x", "text/plain")},
+        )
+        assert resp.status_code == 400
+        msgs = client.get("/api/messages").json()["messages"]
+        assert msgs and msgs[-1]["text"].startswith("上传失败")
+
+
+def test_create_dir_api_and_system_message(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    with TestClient(app) as client:
+        resp = client.post("/api/dirs", json={"name": "docs"})
+        assert resp.status_code == 200
+        assert resp.json()["path"] == "docs"
+        msgs = client.get("/api/messages").json()["messages"]
+        assert msgs and "创建了目录「docs」" in msgs[-1]["text"]
+
+
+def test_delete_api_and_system_message(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    (tmp_path / "shared").mkdir(exist_ok=True)
+    (tmp_path / "shared" / "a.txt").write_text("x")
+    with TestClient(app) as client:
+        resp = client.delete("/api/files", params={"path": "a.txt"})
+        assert resp.status_code == 200
+        assert not (tmp_path / "shared" / "a.txt").exists()
+        msgs = client.get("/api/messages").json()["messages"]
+        assert msgs and "删除了文件「a.txt」" in msgs[-1]["text"]
+
+
+def test_download_success_and_failure_system_messages(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    (tmp_path / "shared").mkdir(exist_ok=True)
+    (tmp_path / "shared" / "a.txt").write_text("hello")
+    with TestClient(app) as client:
+        resp = client.get("/api/download", params={"path": "a.txt"})
+        assert resp.status_code == 200
+        assert resp.content == b"hello"
+        resp2 = client.get("/api/download", params={"path": "missing.txt"})
+        assert resp2.status_code == 404
+        msgs = client.get("/api/messages").json()["messages"]
+        texts = [m["text"] for m in msgs]
+        assert any("下载了文件" in t for t in texts)
+        assert any("下载失败" in t for t in texts)

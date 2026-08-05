@@ -6,13 +6,14 @@ import socket
 import tempfile
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTask
 
 from .chat import ChatRoom, now
 from .chat_store import ChatStore
+from .file_ops import create_dir, delete_path, save_upload
 from .file_tree import build_zip, list_entries, safe_resolve
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -31,6 +32,9 @@ def create_app(
     app.state.shared_dir = shared
     app.state.room = room
     app.state.chat_db = chat_db
+
+    def system_message(text: str) -> None:
+        room.system_message(text)
 
     @app.get("/api/health")
     async def health() -> dict:
@@ -64,26 +68,73 @@ def create_app(
         msgs, has_more = room.page(before, page_limit)
         return {"messages": msgs, "has_more": has_more}
 
+    @app.post("/api/upload")
+    async def upload(
+        dir: str = Query("", max_length=4096),
+        files: list[UploadFile] = File(...),
+    ) -> dict:
+        try:
+            uploaded: list[str] = []
+            for f in files:
+                data = await f.read()
+                rel = save_upload(shared, dir, f.filename or "file", data)
+                uploaded.append(rel)
+            names = "」「".join(f.filename or "file" for f in files)
+            system_message(f"上传了文件「{names}」到「{dir or '根目录'}」")
+            return {"uploaded": uploaded}
+        except Exception as exc:
+            system_message(f"上传失败：{exc}")
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/dirs")
+    async def create_directory(payload: dict) -> dict:
+        try:
+            name = str(payload.get("name", ""))
+            path = create_dir(shared, name)
+            system_message(f"创建了目录「{name}」")
+            return {"path": path}
+        except Exception as exc:
+            system_message(f"创建目录失败：{exc}")
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.delete("/api/files")
+    async def delete_file(path: str = Query(..., max_length=4096)) -> dict:
+        try:
+            target = safe_resolve(shared, path)
+            kind = "目录" if target.is_dir() else "文件"
+            deleted = delete_path(shared, path)
+            system_message(f"删除了{kind}「{path}」")
+            return {"deleted": deleted}
+        except Exception as exc:
+            system_message(f"删除失败：{exc}")
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     @app.get("/api/download")
     async def download(path: str = Query("", max_length=4096)):
         try:
             target = safe_resolve(shared, path)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        if not target.exists():
-            raise HTTPException(status_code=404, detail="not found")
+            if not target.exists():
+                raise FileNotFoundError("文件不存在")
+            kind = "目录" if target.is_dir() else "文件"
+            system_message(f"下载了{kind}「{path or '根目录'}」")
 
-        if target.is_dir():
-            fd, tmp_name = tempfile.mkstemp(suffix=".zip")
-            os.close(fd)
-            build_zip(shared, path, Path(tmp_name))
-            return Response(
-                content=Path(tmp_name).read_bytes(),
-                media_type="application/zip",
-                headers={"Content-Disposition": f'attachment; filename="{target.name}.zip"'},
-                background=BackgroundTask(os.unlink, tmp_name),
-            )
-        return FileResponse(target, filename=target.name)
+            if target.is_dir():
+                fd, tmp_name = tempfile.mkstemp(suffix=".zip")
+                os.close(fd)
+                build_zip(shared, path, Path(tmp_name))
+                return Response(
+                    content=Path(tmp_name).read_bytes(),
+                    media_type="application/zip",
+                    headers={"Content-Disposition": f'attachment; filename="{target.name}.zip"'},
+                    background=BackgroundTask(os.unlink, tmp_name),
+                )
+            return FileResponse(target, filename=target.name)
+        except Exception as exc:
+            system_message(f"下载失败：{exc}")
+            raise HTTPException(
+                status_code=404 if isinstance(exc, FileNotFoundError) else 400,
+                detail=str(exc),
+            ) from exc
 
     @app.websocket("/ws/chat")
     async def chat(ws: WebSocket) -> None:
