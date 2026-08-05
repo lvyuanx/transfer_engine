@@ -9,6 +9,8 @@ const onlineEl = $("online");
 const meInput = $("me");
 const renameBtn = $("rename");
 const refreshBtn = $("refresh");
+const uploadRootBtn = $("upload-root");
+const newDirBtn = $("new-dir");
 const composer = $("composer");
 const input = $("input");
 
@@ -96,6 +98,7 @@ function buildNode(entry) {
   });
 
   row.append(twisty, icon, name, size, downloadBtn);
+  addRowButtons(row, entry);
   li.appendChild(row);
 
   if (entry.type === "dir") {
@@ -167,6 +170,88 @@ async function loadRoot() {
 }
 
 refreshBtn.addEventListener("click", loadRoot);
+
+/* ---------- file operations ---------- */
+
+async function uploadFiles(dir, fileList) {
+  if (!fileList || !fileList.length) return;
+  const fd = new FormData();
+  for (const f of fileList) fd.append("files", f);
+  const url = "/api/upload" + (dir ? "?dir=" + encodeURIComponent(dir) : "");
+  const resp = await fetch(url, { method: "POST", body: fd });
+  if (!resp.ok) {
+    const detail = await resp.json().catch(() => ({}));
+    throw new Error(detail.detail || "HTTP " + resp.status);
+  }
+  await loadRoot();
+}
+
+function pickAndUpload(dir) {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.multiple = true;
+  input.onchange = () => {
+    uploadFiles(dir, input.files).catch((err) => alert(err.message));
+  };
+  input.click();
+}
+
+async function createDir() {
+  const name = prompt("新文件夹名称");
+  if (!name) return;
+  const resp = await fetch("/api/dirs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!resp.ok) {
+    const detail = await resp.json().catch(() => ({}));
+    alert(detail.detail || "创建失败");
+    return;
+  }
+  await loadRoot();
+}
+
+async function removeEntry(path, type) {
+  if (!confirm("确定删除" + type + "「" + path + "」？")) return;
+  const resp = await fetch("/api/files?path=" + encodeURIComponent(path), { method: "DELETE" });
+  if (!resp.ok) {
+    const detail = await resp.json().catch(() => ({}));
+    alert(detail.detail || "删除失败");
+    return;
+  }
+  await loadRoot();
+}
+
+function addRowButtons(row, entry) {
+  if (entry.type === "dir") {
+    const upBtn = document.createElement("button");
+    upBtn.type = "button";
+    upBtn.className = "download-btn row-btn";
+    upBtn.title = "上传到此目录";
+    upBtn.setAttribute("aria-label", "上传到 " + entry.path);
+    upBtn.textContent = "+";
+    upBtn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      pickAndUpload(entry.path);
+    });
+    row.appendChild(upBtn);
+  }
+  const delBtn = document.createElement("button");
+  delBtn.type = "button";
+  delBtn.className = "download-btn row-btn danger";
+  delBtn.title = "删除";
+  delBtn.setAttribute("aria-label", "删除 " + entry.path);
+  delBtn.textContent = "×";
+  delBtn.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    removeEntry(entry.path, entry.type === "dir" ? "目录" : "文件");
+  });
+  row.appendChild(delBtn);
+}
+
+uploadRootBtn.addEventListener("click", () => pickAndUpload(""));
+newDirBtn.addEventListener("click", createDir);
 
 /* ---------- chat ---------- */
 

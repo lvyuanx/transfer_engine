@@ -94,6 +94,17 @@ body {
   padding: 0 6px 8px;
 }
 
+.tree-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.tree-actions .ghost-btn {
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
 #tree-title {
   font-size: 11px;
   letter-spacing: 0.12em;
@@ -214,6 +225,15 @@ body {
   background: #182231;
   border-color: var(--accent-dim);
   color: #eafff8;
+}
+
+.row-btn.danger {
+  color: var(--danger);
+}
+
+.row-btn.danger:hover {
+  border-color: var(--danger);
+  background: rgba(242, 139, 130, 0.08);
 }
 
 .twisty {

@@ -19,7 +19,11 @@
         <nav class="tree-wrap" aria-label="共享文件">
           <div class="tree-toolbar">
             <span id="tree-title">共享目录</span>
-            <button id="refresh" class="icon-btn" title="刷新文件列表" aria-label="刷新文件列表">⟳</button>
+            <div class="tree-actions">
+              <button id="upload-root" class="ghost-btn" title="上传到根目录">上传</button>
+              <button id="new-dir" class="ghost-btn" title="新建文件夹">新建文件夹</button>
+              <button id="refresh" class="icon-btn" title="刷新文件列表" aria-label="刷新文件列表">⟳</button>
+            </div>
           </div>
           <ul id="tree" class="tree"></ul>
           <div id="tree-empty" class="empty hidden">共享目录是空的</div>
