@@ -66,6 +66,10 @@ def http_upload(port: int, filename: str, content: bytes):
 def main() -> int:
     port = 8017
     log_path = ROOT / ".e2e-server.log"
+    shared_dir = Path(tempfile.gettempdir()) / f"transfer-engine-e2e-shared-{os.getpid()}"
+    shared_dir.mkdir(parents=True, exist_ok=True)
+    (shared_dir / "docs").mkdir(exist_ok=True)
+    (shared_dir / "hello.txt").write_text("hello", encoding="utf-8")
     chat_db = Path(tempfile.gettempdir()) / f"transfer-engine-e2e-{os.getpid()}.db"
     proc = subprocess.Popen(
         [
@@ -75,7 +79,7 @@ def main() -> int:
             "--port",
             str(port),
             "--shared-dir",
-            "shared",
+            str(shared_dir),
             "--chat-db",
             str(chat_db),
         ],
@@ -149,6 +153,9 @@ def main() -> int:
             proc.kill()
         for suffix in ("", "-wal", "-shm"):
             Path(str(chat_db) + suffix).unlink(missing_ok=True)
+        import shutil
+
+        shutil.rmtree(shared_dir, ignore_errors=True)
     if failures:
         print("--- server log tail ---")
         print(log_path.read_text()[-3000:])

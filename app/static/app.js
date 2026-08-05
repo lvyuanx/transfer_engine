@@ -152,6 +152,10 @@ async function loadChildren(path, ul) {
   }
 }
 
+function findNodeByPath(path) {
+  return treeEl.querySelector('[data-path="' + CSS.escape(path) + '"]');
+}
+
 async function loadRoot() {
   treeEl.replaceChildren();
   refreshBtn.classList.add("spinning");
@@ -196,20 +200,26 @@ function pickAndUpload(dir) {
   input.click();
 }
 
-async function createDir() {
-  const name = prompt("新文件夹名称");
+async function createDir(parent) {
+  const name = prompt(parent ? "在「" + parent + "」下新建文件夹名称" : "新文件夹名称");
   if (!name) return;
   const resp = await fetch("/api/dirs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, parent: parent || "" }),
   });
   if (!resp.ok) {
     const detail = await resp.json().catch(() => ({}));
     alert(detail.detail || "创建失败");
     return;
   }
-  await loadRoot();
+  if (parent) {
+    const node = findNodeByPath(parent);
+    if (node) await loadChildren(parent, node.querySelector("ul"));
+    else await loadRoot();
+  } else {
+    await loadRoot();
+  }
 }
 
 async function removeEntry(path, type) {
@@ -236,6 +246,18 @@ function addRowButtons(row, entry) {
       pickAndUpload(entry.path);
     });
     row.appendChild(upBtn);
+
+    const mkdirBtn = document.createElement("button");
+    mkdirBtn.type = "button";
+    mkdirBtn.className = "download-btn row-btn";
+    mkdirBtn.title = "新建子文件夹";
+    mkdirBtn.setAttribute("aria-label", "在 " + entry.path + " 下新建文件夹");
+    mkdirBtn.textContent = "⧉";
+    mkdirBtn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      createDir(entry.path);
+    });
+    row.appendChild(mkdirBtn);
   }
   const delBtn = document.createElement("button");
   delBtn.type = "button";

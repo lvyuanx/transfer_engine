@@ -15,14 +15,19 @@ def _valid_name(name: str) -> str:
     return name
 
 
-def create_dir(root: Path, name: str) -> str:
-    """Create a top-level directory and return its relative path."""
+def create_dir(root: Path, name: str, parent: str = "") -> str:
+    """Create a directory under *parent* (root when empty) and return its relative path."""
     name = _valid_name(name)
-    target = safe_resolve(root, "") / name
+    base = safe_resolve(root, parent)
+    if not base.exists():
+        raise FileNotFoundError("父目录不存在")
+    if not base.is_dir():
+        raise NotADirectoryError("父路径不是目录")
+    target = base / name
     if target.exists():
         raise ValueError("同名文件或目录已存在")
     target.mkdir()
-    return name
+    return target.relative_to(safe_resolve(root, "")).as_posix()
 
 
 def validate_upload(

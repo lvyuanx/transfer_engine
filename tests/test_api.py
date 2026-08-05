@@ -171,6 +171,28 @@ def test_create_dir_api_and_system_message(tmp_path):
         assert msgs and "创建了目录「docs」" in msgs[-1]["text"]
 
 
+def test_create_subdir_api_with_parent_and_system_message(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    (tmp_path / "shared" / "docs").mkdir(parents=True, exist_ok=True)
+    with TestClient(app) as client:
+        resp = client.post("/api/dirs", json={"name": "sub", "parent": "docs"})
+        assert resp.status_code == 200
+        assert resp.json()["path"] == "docs/sub"
+        assert (tmp_path / "shared" / "docs" / "sub").is_dir()
+        msgs = client.get("/api/messages").json()["messages"]
+        assert msgs and "创建了目录「docs/sub」" in msgs[-1]["text"]
+
+
+def test_create_subdir_api_rejects_missing_parent(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    with TestClient(app) as client:
+        resp = client.post("/api/dirs", json={"name": "sub", "parent": "missing"})
+        assert resp.status_code == 400
+        assert "父目录" in resp.json()["detail"]
+        msgs = client.get("/api/messages").json()["messages"]
+        assert msgs and "创建目录失败" in msgs[-1]["text"]
+
+
 def test_delete_api_and_system_message(tmp_path):
     app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
     (tmp_path / "shared").mkdir(exist_ok=True)

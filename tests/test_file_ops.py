@@ -13,6 +13,32 @@ def test_create_dir_success_and_duplicate(tmp_path):
         create_dir(root, "docs")
 
 
+def test_create_dir_with_parent(tmp_path):
+    root = tmp_path / "shared"
+    root.mkdir()
+    (root / "docs").mkdir()
+    path = create_dir(root, "sub", parent="docs")
+    assert path == "docs/sub"
+    assert (root / "docs" / "sub").is_dir()
+
+
+def test_create_dir_with_parent_missing_or_file(tmp_path):
+    root = tmp_path / "shared"
+    root.mkdir()
+    (root / "a.txt").write_text("x")
+    with pytest.raises(FileNotFoundError):
+        create_dir(root, "sub", parent="missing")
+    with pytest.raises(NotADirectoryError):
+        create_dir(root, "sub", parent="a.txt")
+
+
+def test_create_dir_with_parent_traversal(tmp_path):
+    root = tmp_path / "shared"
+    root.mkdir()
+    with pytest.raises(ValueError):
+        create_dir(root, "sub", parent="../outside")
+
+
 def test_create_dir_rejects_bad_names(tmp_path):
     root = tmp_path / "shared"
     root.mkdir()

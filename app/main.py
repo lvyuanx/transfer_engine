@@ -98,8 +98,9 @@ def create_app(
     async def create_directory(payload: dict) -> dict:
         try:
             name = str(payload.get("name", ""))
-            path = create_dir(shared, name)
-            system_message(f"创建了目录「{name}」")
+            parent = str(payload.get("parent", ""))
+            path = create_dir(shared, name, parent=parent)
+            system_message(f"创建了目录「{path}」")
             return {"path": path}
         except Exception as exc:
             system_message(f"创建目录失败：{exc}")
