@@ -42,6 +42,27 @@ def http_get(port: int, path: str):
     return resp.status, headers, body
 
 
+def http_upload(port: int, filename: str, content: bytes):
+    boundary = "----transfer-engine-e2e-boundary"
+    body = (
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="files"; filename="{filename}"\r\n'
+        "Content-Type: application/octet-stream\r\n\r\n"
+    ).encode() + content + f"\r\n--{boundary}--\r\n".encode()
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+    conn.request(
+        "POST",
+        "/api/upload?dir=",
+        body=body,
+        headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+    )
+    resp = conn.getresponse()
+    body_resp = resp.read()
+    status = resp.status
+    conn.close()
+    return status, body_resp
+
+
 def main() -> int:
     port = 8017
     log_path = ROOT / ".e2e-server.log"
@@ -83,6 +104,21 @@ def main() -> int:
         assert status == 200
         msgs = json.loads(body)
         assert msgs["messages"] == [] and msgs["has_more"] is False
+
+        status, body = http_upload(port, "smoke.txt", b"hello smoke")
+        print("POST /api/upload ->", status, body.decode())
+        assert status == 200
+        assert json.loads(body)["uploaded"] == ["smoke.txt"]
+
+        status, _, body = http_get(port, "/api/messages")
+        assert status == 200
+        msgs = json.loads(body)["messages"]
+        assert any("上传了文件" in m["text"] for m in msgs)
+
+        status, _, body = http_get(port, "/api/tree")
+        assert status == 200
+        tree = json.loads(body)["entries"]
+        assert any(e["name"] == "smoke.txt" for e in tree)
 
         q = urllib.parse.quote("docs")
         status, headers, body = http_get(port, f"/api/download?path={q}")
