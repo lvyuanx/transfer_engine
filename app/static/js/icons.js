@@ -64,6 +64,10 @@ const SVG = {
     '<path d="M1.42 9a16 16 0 0 1 21.16 0"/>' +
     '<path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>' +
     '<line x1="12" y1="20" x2="12.01" y2="20"/>',
+  lock:
+    '<rect x="3" y="11" width="18" height="11" rx="2"/>' +
+    '<path d="M7 11V7a5 5 0 0 1 10 0v4"/>' +
+    '<circle cx="12" cy="16" r="1"/>',
 };
 
 function buildSVG(name) {

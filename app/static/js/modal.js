@@ -26,6 +26,7 @@ export function openModal(options = {}) {
     title = "",
     message = "",
     input = false,
+    inputType = "text",
     placeholder = "",
     maxLength = 200,
     hint = "",
@@ -63,7 +64,7 @@ export function openModal(options = {}) {
   if (input) {
     inputEl = document.createElement("input");
     inputEl.className = "modal-input";
-    inputEl.type = "text";
+    inputEl.type = inputType;
     inputEl.placeholder = placeholder;
     inputEl.maxLength = maxLength;
     inputEl.autocomplete = "off";
@@ -191,6 +192,7 @@ export function promptModal(title, options = {}) {
   return openModal({
     title,
     input: true,
+    inputType: options.inputType || "text",
     placeholder: options.placeholder || "",
     maxLength: options.maxLength || 200,
     hint: options.hint || "",

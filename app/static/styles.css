@@ -340,6 +340,29 @@ body {
   grid-template-rows: 1fr;
 }
 
+/* ---------- encrypted folder ---------- */
+
+.folder.encrypted > .tree-row {
+  color: #c9a96e;
+}
+
+.folder.encrypted > .tree-row .icon {
+  color: var(--warn);
+}
+
+.folder.encrypted > .tree-row:hover {
+  background: rgba(226, 178, 106, 0.1);
+}
+
+.folder.encrypted.unlocked > .tree-row .icon {
+  color: var(--accent);
+}
+
+.modal-input[type="password"] {
+  letter-spacing: 0.18em;
+  font-family: var(--font-sans);
+}
+
 .empty {
   text-align: center;
   color: var(--muted);

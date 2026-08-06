@@ -4,6 +4,8 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 
+VAULT_META_FILE = ".vault_meta"
+
 
 def _within_root(root: Path, target: Path) -> bool:
     root_resolved = root.resolve()
@@ -28,6 +30,11 @@ def safe_resolve(root: Path, rel: str = "") -> Path:
     return target
 
 
+def is_vault_dir(folder: Path) -> bool:
+    """判断目录是否为加密文件夹（存在 .vault_meta 文件）。"""
+    return folder.is_dir() and (folder / VAULT_META_FILE).is_file()
+
+
 def list_entries(root: Path, rel: str = "") -> list[dict]:
     """List visible entries of a directory as plain dicts, dirs first."""
     target = safe_resolve(root, rel)
@@ -47,15 +54,16 @@ def list_entries(root: Path, rel: str = "") -> list[dict]:
         is_dir = child.is_dir()
         stat = child.stat()
         rel_path = (rel_base / name).as_posix() if str(rel_base) != "." else name
-        entries.append(
-            {
-                "name": name,
-                "path": rel_path,
-                "type": "dir" if is_dir else "file",
-                "size": None if is_dir else stat.st_size,
-                "mtime": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M"),
-            }
-        )
+        entry = {
+            "name": name,
+            "path": rel_path,
+            "type": "dir" if is_dir else "file",
+            "size": None if is_dir else stat.st_size,
+            "mtime": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M"),
+        }
+        if is_dir and is_vault_dir(child):
+            entry["encrypted"] = True
+        entries.append(entry)
 
     entries.sort(key=lambda e: (e["type"] != "dir", e["name"].lower()))
     return entries

@@ -1,5 +1,5 @@
 import { $, fmtSize } from "./utils.js";
-import { loadRoot } from "./tree.js";
+import { loadRoot, getVaultToken } from "./tree.js";
 import { alertModal } from "./modal.js";
 
 const uploads = $("uploads");
@@ -53,7 +53,12 @@ function uploadOne(directory, file, view) {
     const xhr = new XMLHttpRequest();
     const form = new FormData();
     form.append("files", file);
-    xhr.open("POST", "/api/upload" + (directory ? "?dir=" + encodeURIComponent(directory) : ""));
+    const params = new URLSearchParams();
+    if (directory) params.set("dir", directory);
+    const token = getVaultToken(directory);
+    if (token) params.set("token", token);
+    const qs = params.toString();
+    xhr.open("POST", "/api/upload" + (qs ? "?" + qs : ""));
     xhr.upload.onprogress = (event) => event.lengthComputable && view.update(event.loaded);
     xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error("上传失败"));
     xhr.onerror = () => reject(new Error("网络错误"));

@@ -15,6 +15,7 @@ from .chat import ChatRoom, now
 from .chat_store import ChatStore
 from .file_ops import create_dir, delete_path, save_upload
 from .file_tree import build_zip, list_entries, safe_resolve
+from .vault import VaultStore
 
 STATIC_DIR = Path(__file__).parent / "static"
 
@@ -34,6 +35,15 @@ def create_app(
     app.state.room = room
     app.state.chat_db = chat_db
     app.state.max_upload_size_mb = max_upload_size_mb
+    app.state.vaults = VaultStore()
+
+    def _require_vault(path: str, token: str | None) -> None:
+        """若 path 位于加密文件夹内，验证 token；否则无操作。"""
+        vault_path = app.state.vaults.find_vault_root(shared, path)
+        if vault_path is None:
+            return
+        if token is None or not app.state.vaults.validate_token(token, path):
+            raise HTTPException(status_code=403, detail="需要密码解锁")
 
     async def system_message(text: str) -> None:
         meta = room.system_message(text)
@@ -52,10 +62,50 @@ def create_app(
     async def health() -> dict:
         return {"ok": True}
 
-    @app.get("/api/tree")
-    async def tree(path: str = Query("", max_length=4096)) -> dict:
+    @app.post("/api/vaults")
+    async def create_vault(request: Request, payload: dict) -> dict:
         try:
+            name = str(payload.get("name", ""))
+            parent = str(payload.get("parent", ""))
+            password = str(payload.get("password", ""))
+            if not name or not password:
+                raise ValueError("名称和密码不能为空")
+            path = app.state.vaults.create_vault(shared, name, parent, password)
+            who = request.client.host if request.client else "unknown"
+            await system_message(f"{who} 创建了加密文件夹「{path}」")
+            return {"path": path}
+        except Exception as exc:
+            who = request.client.host if request.client else "unknown"
+            await system_message(f"{who} 创建加密文件夹失败：{exc}")
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/vaults/unlock")
+    async def unlock_vault(request: Request, payload: dict) -> dict:
+        try:
+            path = str(payload.get("path", ""))
+            password = str(payload.get("password", ""))
+            if not path or not password:
+                raise ValueError("路径和密码不能为空")
+            if not app.state.vaults.verify(shared, path, password):
+                raise ValueError("密码错误")
+            token = app.state.vaults.issue_token(shared, path)
+            return {"path": path, "token": token}
+        except Exception as exc:
+            who = request.client.host if request.client else "unknown"
+            await system_message(f"{who} 解锁失败：{exc}")
+            raise HTTPException(status_code=403 if "密码" in str(exc) else 400,
+                                detail=str(exc)) from exc
+
+    @app.get("/api/tree")
+    async def tree(
+        path: str = Query("", max_length=4096),
+        token: str | None = Query(None, max_length=4096),
+    ) -> dict:
+        try:
+            _require_vault(path, token)
             entries = list_entries(shared, path)
+        except HTTPException:
+            raise
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except FileNotFoundError as exc:
@@ -84,9 +134,11 @@ def create_app(
     async def upload(
         request: Request,
         dir: str = Query("", max_length=4096),
+        token: str | None = Query(None, max_length=4096),
         files: list[UploadFile] = File(...),
     ) -> dict:
         try:
+            _require_vault(dir, token)
             uploaded: list[str] = []
             for f in files:
                 data = await f.read()
@@ -112,6 +164,9 @@ def create_app(
         try:
             name = str(payload.get("name", ""))
             parent = str(payload.get("parent", ""))
+            vault_token = payload.get("token")
+            if vault_token:
+                _require_vault(parent, str(vault_token))
             path = create_dir(shared, name, parent=parent)
             who = request.client.host if request.client else "unknown"
             await system_message(f"{who} 创建了目录「{path}」")
@@ -122,8 +177,13 @@ def create_app(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.delete("/api/files")
-    async def delete_file(request: Request, path: str = Query(..., max_length=4096)) -> dict:
+    async def delete_file(
+        request: Request,
+        path: str = Query(..., max_length=4096),
+        token: str | None = Query(None, max_length=4096),
+    ) -> dict:
         try:
+            _require_vault(path, token)
             target = safe_resolve(shared, path)
             kind = "目录" if target.is_dir() else "文件"
             deleted = delete_path(shared, path)
@@ -136,8 +196,13 @@ def create_app(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.get("/api/download")
-    async def download(request: Request, path: str = Query("", max_length=4096)):
+    async def download(
+        request: Request,
+        path: str = Query("", max_length=4096),
+        token: str | None = Query(None, max_length=4096),
+    ):
         try:
+            _require_vault(path, token)
             target = safe_resolve(shared, path)
             if not target.exists():
                 raise FileNotFoundError("文件不存在")
