@@ -37,7 +37,7 @@ body {
 
 .app {
   display: grid;
-  grid-template-columns: minmax(280px, 34%) 1fr;
+  grid-template-columns: minmax(280px, 34%) 6px 1fr;
   height: 100vh;
   gap: 1px;
   background: var(--line);
@@ -50,6 +50,18 @@ body {
     linear-gradient(180deg, rgba(110, 231, 200, 0.035), transparent 220px),
     var(--panel);
   min-width: 0;
+}
+
+/* 侧栏与聊天区之间的可拖动分隔条 */
+.splitter {
+  cursor: col-resize;
+  background: var(--panel);
+  transition: background 0.15s ease;
+}
+
+.splitter:hover,
+.splitter.dragging {
+  background: var(--accent-dim);
 }
 
 .brand {

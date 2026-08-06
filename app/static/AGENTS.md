@@ -10,6 +10,7 @@
 - `styles.css`：全部视觉样式。
 - `share.css`：独立分享下载页样式。
 - `app.js`：模块入口，只负责启动。
+- `js/splitter.js`：左右面板拖动分隔条，调整侧栏/聊天区宽度并持久化到 localStorage。
 - `js/icons.js`：图标（含 `folder-upload` 上传文件夹图标；`share` 为实心参考 SVG 独立分支）。
 - `js/utils.js`：通用格式化工具。
 - `js/tree.js`：文件树和文件操作。仅文件行提供下载按钮，文件夹行暂不提供下载
