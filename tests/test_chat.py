@@ -118,7 +118,7 @@ def test_file_operation_system_message_is_broadcast_immediately(tmp_path):
     message = room.broadcast.await_args.args[0]
     assert message["type"] == "message"
     assert message["user"] == "系统"
-    assert message["text"] == "创建了目录「docs」"
+    assert "创建了目录「docs」" in message["text"]
     assert message["id"] == 1
     assert message["time"]
 

@@ -145,7 +145,7 @@ def test_upload_failure_returns_400_and_system_message(tmp_path):
         )
         assert resp.status_code == 400
         msgs = client.get("/api/messages").json()["messages"]
-        assert msgs and msgs[-1]["text"].startswith("上传失败")
+        assert msgs and "上传失败" in msgs[-1]["text"]
 
 
 def test_upload_size_limit_applies(tmp_path):

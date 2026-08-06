@@ -1,5 +1,6 @@
 import { $, fmtSize, getErrorMessage } from "./utils.js";
 import { icon, setIcon } from "./icons.js";
+import { alertModal, confirmModal, promptModal } from "./modal.js";
 
 const tree = $("tree");
 const empty = $("tree-empty");
@@ -126,9 +127,14 @@ function requestUpload(path) {
 }
 
 async function removeEntry(entry) {
-  if (!confirm("确定删除" + (entry.type === "dir" ? "目录" : "文件") + "「" + entry.path + "」？")) return;
+  const ok = await confirmModal(
+    "删除确认",
+    "确定删除" + (entry.type === "dir" ? "目录" : "文件") + "「" + entry.path + "」？",
+    { danger: true }
+  );
+  if (!ok) return;
   const response = await fetch("/api/files?path=" + encodeURIComponent(entry.path), { method: "DELETE" });
-  if (!response.ok) return alert(await getErrorMessage(response, "删除失败"));
+  if (!response.ok) return alertModal("删除失败", await getErrorMessage(response, "删除失败"));
   await loadRoot();
 }
 
@@ -142,10 +148,13 @@ async function addDirectory(parent, name) {
   await loadRoot();
 }
 
-function createDirectory(parent = "") {
-  const name = prompt(parent ? "在「" + parent + "」下新建文件夹" : "新建文件夹");
-  if (!name || !name.trim()) return;
-  addDirectory(parent, name.trim()).catch((error) => alert(error.message));
+async function createDirectory(parent = "") {
+  const name = await promptModal(
+    parent ? "在「" + parent + "」下新建文件夹" : "新建文件夹",
+    { placeholder: "文件夹名称", hint: "输入文件夹名称，不支持 / 和开头为 . 的名称" }
+  );
+  if (!name) return;
+  addDirectory(parent, name).catch((error) => alertModal("创建失败", error.message));
 }
 
 refresh.addEventListener("click", loadRoot);

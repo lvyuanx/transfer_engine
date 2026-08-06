@@ -1,5 +1,6 @@
 import { $, fmtSize } from "./utils.js";
 import { loadRoot } from "./tree.js";
+import { alertModal } from "./modal.js";
 
 const uploads = $("uploads");
 const uploadList = $("upload-list");
@@ -63,7 +64,7 @@ function uploadOne(directory, file, view) {
 async function uploadFiles(directory, selected) {
   const files = Array.from(selected || []);
   if (!files.length) return;
-  if (uploading) return alert("已有上传正在进行，请等待完成");
+  if (uploading) return alertModal("提示", "已有上传正在进行，请等待完成");
   uploading = true;
   uploads.classList.remove("hidden");
   let complete = 0;

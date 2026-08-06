@@ -14,6 +14,7 @@
 - `js/tree.js`：文件树和文件操作。
 - `js/upload.js`：XHR 上传和进度。
 - `js/chat.js`：WebSocket 聊天和历史分页。
+- `js/modal.js`：统一样式弹窗（提示 / 确认 / 输入），替代浏览器原生弹窗。
 
 ## 数据流
 

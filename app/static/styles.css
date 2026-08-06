@@ -724,6 +724,20 @@ body {
   color: var(--text);
 }
 
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+  word-break: break-word;
+}
+
 .modal-input {
   width: 100%;
   padding: 9px 12px;
@@ -782,6 +796,17 @@ body {
 
 .primary-btn:active {
   transform: translateY(1px);
+}
+
+.danger-btn {
+  border-color: var(--danger);
+  background: rgba(242, 139, 130, 0.16);
+  color: var(--danger);
+}
+
+.danger-btn:hover {
+  background: rgba(242, 139, 130, 0.26);
+  border-color: var(--danger);
 }
 
 @media (max-width: 760px) {

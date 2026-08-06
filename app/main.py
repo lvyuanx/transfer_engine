@@ -6,7 +6,7 @@ import socket
 import tempfile
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTask
@@ -82,6 +82,7 @@ def create_app(
 
     @app.post("/api/upload")
     async def upload(
+        request: Request,
         dir: str = Query("", max_length=4096),
         files: list[UploadFile] = File(...),
     ) -> dict:
@@ -98,44 +99,51 @@ def create_app(
                 )
                 uploaded.append(rel)
             names = "」「".join(f.filename or "file" for f in files)
-            await system_message(f"上传了文件「{names}」到「{dir or '根目录'}」")
+            who = request.client.host if request.client else "unknown"
+            await system_message(f"{who} 上传了文件「{names}」到「{dir or '根目录'}」")
             return {"uploaded": uploaded}
         except Exception as exc:
-            await system_message(f"上传失败：{exc}")
+            who = request.client.host if request.client else "unknown"
+            await system_message(f"{who} 上传失败：{exc}")
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.post("/api/dirs")
-    async def create_directory(payload: dict) -> dict:
+    async def create_directory(request: Request, payload: dict) -> dict:
         try:
             name = str(payload.get("name", ""))
             parent = str(payload.get("parent", ""))
             path = create_dir(shared, name, parent=parent)
-            await system_message(f"创建了目录「{path}」")
+            who = request.client.host if request.client else "unknown"
+            await system_message(f"{who} 创建了目录「{path}」")
             return {"path": path}
         except Exception as exc:
-            await system_message(f"创建目录失败：{exc}")
+            who = request.client.host if request.client else "unknown"
+            await system_message(f"{who} 创建目录失败：{exc}")
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.delete("/api/files")
-    async def delete_file(path: str = Query(..., max_length=4096)) -> dict:
+    async def delete_file(request: Request, path: str = Query(..., max_length=4096)) -> dict:
         try:
             target = safe_resolve(shared, path)
             kind = "目录" if target.is_dir() else "文件"
             deleted = delete_path(shared, path)
-            await system_message(f"删除了{kind}「{path}」")
+            who = request.client.host if request.client else "unknown"
+            await system_message(f"{who} 删除了{kind}「{path}」")
             return {"deleted": deleted}
         except Exception as exc:
-            await system_message(f"删除失败：{exc}")
+            who = request.client.host if request.client else "unknown"
+            await system_message(f"{who} 删除失败：{exc}")
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.get("/api/download")
-    async def download(path: str = Query("", max_length=4096)):
+    async def download(request: Request, path: str = Query("", max_length=4096)):
         try:
             target = safe_resolve(shared, path)
             if not target.exists():
                 raise FileNotFoundError("文件不存在")
             kind = "目录" if target.is_dir() else "文件"
-            await system_message(f"下载了{kind}「{path or '根目录'}」")
+            who = request.client.host if request.client else "unknown"
+            await system_message(f"{who} 下载了{kind}「{path or '根目录'}」")
 
             if target.is_dir():
                 fd, tmp_name = tempfile.mkstemp(suffix=".zip")
@@ -149,7 +157,8 @@ def create_app(
                 )
             return FileResponse(target, filename=target.name)
         except Exception as exc:
-            await system_message(f"下载失败：{exc}")
+            who = request.client.host if request.client else "unknown"
+            await system_message(f"{who} 下载失败：{exc}")
             raise HTTPException(
                 status_code=404 if isinstance(exc, FileNotFoundError) else 400,
                 detail=str(exc),
