@@ -53,10 +53,15 @@ uv run python scripts/e2e_smoke.py   # 端到端冒烟（真实启动服务器 +
 app/
   main.py        # FastAPI 应用、路由、启动逻辑
   file_tree.py   # 文件树/路径安全/打包 zip
+  file_ops.py    # 上传、新建目录、删除
   chat.py        # 聊天房间与在线人数
-  static/        # 前端页面（HTML/CSS/JS）
+  chat_store.py  # 聊天 SQLite 持久化
+  static/        # 前端页面（HTML/CSS/ES Modules）
+    js/          # 图标、文件树、上传与聊天模块
 scripts/
   e2e_smoke.py   # 端到端冒烟脚本
 tests/           # 单元测试
 shared/          # 默认共享目录（可自行替换）
 ```
+
+项目约定见 `PROJECT_AGENTS.md`；各模块职责见对应目录的 `AGENTS.md`。

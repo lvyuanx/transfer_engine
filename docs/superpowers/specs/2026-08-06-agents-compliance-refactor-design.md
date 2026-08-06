@@ -24,13 +24,10 @@
 
 ## 后端设计
 
-- `app/web.py` 承担 `create_app()`、REST 路由、WebSocket 端点、静态资源挂载与系统消息
-  广播。
-- `app/network.py` 仅提供 `get_lan_ip()`。
-- `app/main.py` 只保留 CLI 参数解析和 uvicorn 启动；重新导出 `create_app` 和
-  `get_lan_ip`，维持既有 `from app.main import create_app` 测试/调用兼容。
-- 已经边界清楚的 `chat.py`、`chat_store.py`、`file_ops.py`、`file_tree.py` 不改变
-  公开函数和行为。
+- `app/main.py` 当前为 270 行，低于单文件限制；保留应用工厂、路由、网络探测与 CLI，
+  以避免改变已有的 `from app.main import create_app` 调用入口。
+- `chat.py`、`chat_store.py`、`file_ops.py`、`file_tree.py` 已按实时聊天、持久化、文件操作
+  和路径安全分责；本次为其补充模块说明而不改变公开函数和行为。
 
 ## 前端设计
 
