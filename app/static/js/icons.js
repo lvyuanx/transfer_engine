@@ -41,6 +41,29 @@ const SVG = {
   file:
     '<path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>' +
     '<polyline points="13 2 13 9 20 9"/>',
+  "file-image":
+    '<rect x="3" y="3" width="18" height="18" rx="2"/>' +
+    '<circle cx="8.5" cy="8.5" r="1.5"/>' +
+    '<polyline points="21 15 16 10 5 21"/>',
+  "file-video":
+    '<path d="M23 7l-7 5 7 5V7z"/>' +
+    '<rect x="1" y="5" width="15" height="14" rx="2"/>',
+  "file-audio":
+    '<path d="M9 18V5l12-2v13"/>' +
+    '<circle cx="6" cy="18" r="3"/>' +
+    '<circle cx="18" cy="16" r="3"/>',
+  "file-archive":
+    '<path d="M16.5 9.4 7.55 4.24"/>' +
+    '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>' +
+    '<polyline points="3.27 6.96 12 12.01 20.73 6.96"/>' +
+    '<line x1="12" y1="22.08" x2="12" y2="12"/>',
+  chat:
+    '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  network:
+    '<path d="M5 12.55a11 11 0 0 1 14.08 0"/>' +
+    '<path d="M1.42 9a16 16 0 0 1 21.16 0"/>' +
+    '<path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>' +
+    '<line x1="12" y1="20" x2="12.01" y2="20"/>',
 };
 
 function buildSVG(name) {

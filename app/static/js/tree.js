@@ -38,6 +38,19 @@ function actionButton(name, label, handler, danger = false) {
   return button;
 }
 
+function fileIconName(name) {
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  const map = {
+    jpg: "file-image", jpeg: "file-image", png: "file-image", gif: "file-image",
+    webp: "file-image", svg: "file-image", bmp: "file-image", ico: "file-image",
+    mp4: "file-video", avi: "file-video", mkv: "file-video", mov: "file-video", webm: "file-video",
+    mp3: "file-audio", wav: "file-audio", flac: "file-audio", ogg: "file-audio", aac: "file-audio",
+    zip: "file-archive", rar: "file-archive", "7z": "file-archive", tar: "file-archive",
+    gz: "file-archive", bz2: "file-archive", xz: "file-archive",
+  };
+  return map[ext] || "file";
+}
+
 function buildNode(entry) {
   const item = document.createElement("li");
   item.className = entry.type === "dir" ? "folder" : "file";
@@ -51,7 +64,7 @@ function buildNode(entry) {
   if (entry.type === "dir") twisty.append(icon("chevron-right"));
   const typeIcon = document.createElement("span");
   typeIcon.className = "icon";
-  typeIcon.append(icon(entry.type === "dir" ? "folder" : "file"));
+  typeIcon.append(icon(entry.type === "dir" ? "folder" : fileIconName(entry.name)));
   const name = document.createElement("span");
   name.className = "name";
   name.textContent = entry.name;
