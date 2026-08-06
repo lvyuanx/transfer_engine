@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 import sqlite3
 import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+logger = logging.getLogger("chat_store")
 
 
 def utc_now_iso() -> str:
@@ -18,46 +21,67 @@ class ChatStore:
         self._prune_every = prune_every
         self._writes_since_prune = 0
         self._lock = threading.Lock()
-        self._conn = sqlite3.connect(str(self._path), check_same_thread=False)
-        self._conn.row_factory = sqlite3.Row
-        with self._lock:
-            self._conn.execute("PRAGMA journal_mode=WAL")
-            self._conn.execute("PRAGMA synchronous=NORMAL")
-            self._conn.execute("PRAGMA busy_timeout=5000")
-            self._conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS messages (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user TEXT NOT NULL,
-                    text TEXT NOT NULL,
-                    ts TEXT NOT NULL
+        self._readonly = False
+        self._conn = None
+        try:
+            self._conn = sqlite3.connect(str(self._path), check_same_thread=False)
+            self._conn.row_factory = sqlite3.Row
+            with self._lock:
+                self._conn.execute("PRAGMA journal_mode=WAL")
+                self._conn.execute("PRAGMA synchronous=NORMAL")
+                self._conn.execute("PRAGMA busy_timeout=5000")
+                self._conn.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS messages (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user TEXT NOT NULL,
+                        text TEXT NOT NULL,
+                        ts TEXT NOT NULL
+                    )
+                    """
                 )
-                """
-            )
-            self._conn.execute("CREATE INDEX IF NOT EXISTS idx_messages_ts ON messages(ts)")
-            self._conn.commit()
-        self.prune(datetime.now(timezone.utc) - timedelta(days=retention_days))
+                self._conn.execute("CREATE INDEX IF NOT EXISTS idx_messages_ts ON messages(ts)")
+                self._conn.commit()
+            self.prune(datetime.now(timezone.utc) - timedelta(days=retention_days))
+        except sqlite3.OperationalError as e:
+            logger.warning("数据库不可写 (%s)，聊天仅在线广播，重启后历史不保留", e)
+            self._readonly = True
 
     def close(self) -> None:
-        with self._lock:
-            self._conn.close()
+        if self._conn is not None:
+            with self._lock:
+                self._conn.close()
 
     def append(self, user: str, text: str) -> dict:
         ts = utc_now_iso()
-        with self._lock:
-            cur = self._conn.execute(
-                "INSERT INTO messages (user, text, ts) VALUES (?, ?, ?)",
-                (user, text, ts),
-            )
-            self._conn.commit()
-            msg_id = cur.lastrowid
-        self._writes_since_prune += 1
-        if self._writes_since_prune >= self._prune_every:
-            self._writes_since_prune = 0
-            self.prune(datetime.now(timezone.utc) - timedelta(days=self._retention_days))
+        if self._readonly or self._conn is None:
+            self._counter = getattr(self, "_counter", 0) + 1
+            return {"id": self._counter, "user": user, "text": text, "ts": ts}
+        try:
+            with self._lock:
+                cur = self._conn.execute(
+                    "INSERT INTO messages (user, text, ts) VALUES (?, ?, ?)",
+                    (user, text, ts),
+                )
+                self._conn.commit()
+                msg_id = cur.lastrowid
+            self._writes_since_prune += 1
+            if self._writes_since_prune >= self._prune_every:
+                self._writes_since_prune = 0
+                try:
+                    self.prune(datetime.now(timezone.utc) - timedelta(days=self._retention_days))
+                except sqlite3.OperationalError:
+                    logger.warning("数据库只读，跳过过期清理")
+        except sqlite3.OperationalError:
+            logger.warning("数据库只读，消息未持久化，仅在线广播")
+            self._readonly = True
+            self._counter = getattr(self, "_counter", 0) + 1
+            return {"id": self._counter, "user": user, "text": text, "ts": ts}
         return {"id": msg_id, "user": user, "text": text, "ts": ts}
 
     def recent(self, limit: int) -> list[dict]:
+        if self._readonly or self._conn is None:
+            return []
         limit = max(1, min(int(limit), 500))
         with self._lock:
             rows = self._conn.execute(
@@ -69,6 +93,8 @@ class ChatStore:
         return messages
 
     def page(self, before_id: int | None, limit: int) -> tuple[list[dict], bool]:
+        if self._readonly or self._conn is None:
+            return [], False
         limit = max(1, min(int(limit), 500))
         with self._lock:
             if before_id is not None:
