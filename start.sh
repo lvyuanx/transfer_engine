@@ -8,6 +8,20 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 
+# 启动参数缓存：首次带参数启动时保存，之后直接运行 ./start.sh 会自动复用
+CACHE_FILE="$ROOT/.start-args"
+
+# 无参数启动时，复用上次缓存的参数
+ORIG_ARGS=("$@")
+if [[ $# -eq 0 && -f "$CACHE_FILE" ]]; then
+  CACHED_ARGS=()
+  while IFS= read -r line; do
+    CACHED_ARGS+=("$line")
+  done < "$CACHE_FILE"
+  echo "未指定参数，复用上次缓存的参数: ${CACHED_ARGS[*]}"
+  set -- "${CACHED_ARGS[@]}"
+fi
+
 PORT=8000
 APP_ARGS=()
 while [[ $# -gt 0 ]]; do
@@ -29,6 +43,12 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+# 本次带参数启动时，将参数缓存起来供下次无参数启动复用
+if [[ ${#ORIG_ARGS[@]} -gt 0 ]]; then
+  printf '%s\n' "${ORIG_ARGS[@]}" > "$CACHE_FILE"
+  echo "已缓存本次启动参数: ${ORIG_ARGS[*]}"
+fi
 
 # 找到 uv 的完整路径。sudo 下 PATH 通常不含用户的 ~/.local/bin，
 # 所以需要探测常见安装位置。
@@ -83,7 +103,7 @@ if [[ -f "$PID_FILE" ]]; then
   OLD_PID="$(cat "$PID_FILE" 2>/dev/null || true)"
   if [[ -n "$OLD_PID" ]] && kill -0 "$OLD_PID" 2>/dev/null; then
     echo "服务已在运行 (PID $OLD_PID, 端口 $PORT)"
-    echo "如需重启，请先执行 ./stop.sh --port $PORT"
+    echo "如需重启，请先执行 ./stop.sh"
     exit 0
   fi
   echo "发现过期的 PID 文件，已清理"

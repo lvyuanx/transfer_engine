@@ -2,33 +2,14 @@
 #
 # 停止 LAN Transfer 服务
 #
-# 用法: ./stop.sh [--port 9000]
+# 用法: ./stop.sh
+# 自动读取 start.sh 生成的 PID 文件 (logs/server-*.pid) 并停止对应服务
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 
-PORT=8000
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --port)
-      [[ $# -ge 2 ]] || { echo "错误: --port 需要一个参数" >&2; exit 1; }
-      PORT="$2"
-      shift 2
-      ;;
-    --port=*)
-      PORT="${1#*=}"
-      shift
-      ;;
-    *)
-      echo "未知参数: $1" >&2
-      exit 1
-      ;;
-  esac
-done
-
 LOG_DIR="$ROOT/logs"
-PID_FILE="$LOG_DIR/server-${PORT}.pid"
 
 # 先终止子进程，再终止主进程
 kill_tree() {
@@ -42,6 +23,8 @@ kill_tree() {
 
 stop_pid() {
   local pid="$1"
+  local port="$2"
+  local pid_file="$3"
   local cmd
   cmd="$(ps -p "$pid" -o command= 2>/dev/null || true)"
   if [[ -z "$cmd" ]]; then
@@ -54,11 +37,11 @@ stop_pid() {
     return 1
   fi
 
-  echo "正在停止 LAN Transfer (PID $pid, 端口 $PORT)..."
+  echo "正在停止 LAN Transfer (PID $pid, 端口 $port)..."
   kill_tree "$pid"
   for _ in $(seq 1 20); do
     if ! kill -0 "$pid" 2>/dev/null; then
-      rm -f "$PID_FILE"
+      rm -f "$pid_file"
       echo "已停止"
       return 0
     fi
@@ -67,19 +50,25 @@ stop_pid() {
 
   echo "进程未正常退出，强制结束..."
   kill -KILL "$pid" 2>/dev/null || true
-  rm -f "$PID_FILE"
+  rm -f "$pid_file"
   echo "已强制停止"
   return 0
 }
 
-if [[ -f "$PID_FILE" ]]; then
-  PID="$(cat "$PID_FILE" 2>/dev/null || true)"
-  if [[ -n "$PID" ]] && stop_pid "$PID"; then
-    exit 0
+found=0
+for pid_file in "$LOG_DIR"/server-*.pid; do
+  [[ -e "$pid_file" ]] || continue
+  found=1
+  port="$(basename "$pid_file" | sed 's/^server-//; s/\.pid$//')"
+  pid="$(cat "$pid_file" 2>/dev/null || true)"
+  if [[ -n "$pid" ]] && stop_pid "$pid" "$port" "$pid_file"; then
+    continue
   fi
-  rm -f "$PID_FILE"
-  echo "PID 文件已过期或进程不存在，已清理: $PID_FILE"
-fi
+  rm -f "$pid_file"
+  echo "PID 文件已过期或进程不存在，已清理: $pid_file"
+done
 
-echo "未找到运行中的服务 (端口 $PORT)"
+if [[ $found -eq 0 ]]; then
+  echo "未找到运行中的服务"
+fi
 exit 0

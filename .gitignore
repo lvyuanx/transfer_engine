@@ -39,6 +39,9 @@ data/
 # 日志
 *.log
 
+# 启动参数缓存
+.start-args
+
 # 运行时 PID / 日志目录
 logs/
 
