@@ -1,6 +1,7 @@
 import { $, fmtSize, getErrorMessage } from "./utils.js";
 import { icon, setIcon } from "./icons.js";
 import { alertModal, confirmModal, openModal } from "./modal.js";
+import { shareEntry } from "./share.js";
 
 const tree = $("tree");
 const empty = $("tree-empty");
@@ -109,7 +110,10 @@ function buildNode(entry) {
   if (isEncrypted && !vaultTokens.has(entry.path)) {
     // 已解锁的加密文件夹显示正常操作按钮
   } else if (!isEncrypted) {
-    row.append(actionButton("download", "下载 " + entry.name, () => download(entry.path, entry.name)));
+    row.append(
+      actionButton("download", "下载 " + entry.name, () => download(entry.path, entry.name)),
+      actionButton("share", "分享 " + entry.name, () => shareEntry(entry.path, entry.name, getVaultToken(entry.path))),
+    );
   }
 
   if (isDir && !isEncrypted) {
@@ -187,10 +191,11 @@ function rebuildEncryptedRow(item, row, path) {
   // 在已解锁的加密文件夹行末尾重新添加操作按钮
   const entry = { path, type: "dir", name: path.split("/").pop() };
   const btnDownload = actionButton("download", "下载 " + entry.name, () => download(entry.path, entry.name));
+  const btnShare = actionButton("share", "分享 " + entry.name, () => shareEntry(entry.path, entry.name, vaultTokens.get(path)));
   const btnUpload = actionButton("upload", "上传到 " + entry.path, () => requestUpload(entry.path));
   const btnMkdir = actionButton("new-folder", "在 " + entry.path + " 下新建文件夹", () => createDirectory(entry.path));
   const btnDelete = actionButton("delete", "删除 " + entry.path, () => removeEntry(entry), true);
-  row.append(btnDownload, btnUpload, btnMkdir, btnDelete);
+  row.append(btnDownload, btnShare, btnUpload, btnMkdir, btnDelete);
 }
 
 export async function loadChildren(path, container, token = null) {

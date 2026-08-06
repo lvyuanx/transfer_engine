@@ -8,13 +8,15 @@
 
 - `index.html`：页面结构。
 - `styles.css`：全部视觉样式。
+- `share.css`：独立分享下载页样式。
 - `app.js`：模块入口，只负责启动。
 - `js/icons.js`：图标。
 - `js/utils.js`：通用格式化工具。
 - `js/tree.js`：文件树和文件操作。
 - `js/upload.js`：XHR 上传和进度。
 - `js/chat.js`：WebSocket 聊天、历史分页、用户名 localStorage 缓存，以及基于用户名 hash 的随机头像分配（`avatarIndex()`）。
-- `js/modal.js`：统一样式弹窗（提示 / 确认 / 输入），替代浏览器原生弹窗。支持 `inputType: "password"` 密码输入框。
+- `js/modal.js`：统一样式弹窗（提示 / 确认 / 输入 / 分享配置），替代浏览器原生弹窗。支持 `inputType: "password"` 密码输入框、加密开关（`switch`）与分段控件（`radios`）；`onSubmit` 接收收集到的状态对象。
+- `js/share.js`：分享弹窗与链接复制（POST `/api/shares` 后复制完整 URL）。
 - `icons/avatars/`：10 个 48×48 动物头像 SVG（橘猫、柴犬、狐狸、熊猫、兔子、青蛙、企鹅、仓鼠、猫头鹰、小恐龙），由用户名 hash 映射，同用户头像固定。
 
 ## 加密文件夹
@@ -26,6 +28,14 @@
 `POST /api/vaults/unlock`；现有端点均增加 `token` 参数校验。
 
 前端：加密文件夹在文件树中显示锁图标（warn 色），点击弹出密码输入框解锁。
+
+## 分享
+
+- 文件树中普通文件/文件夹、已解锁加密文件夹行均有分享按钮（`tree.js` 传入 `getVaultToken(path)`）。
+- 分享弹窗（`js/share.js` + `modal.js` 的 `radios` 分段控件）：加密开关 + 密码输入 + 时效
+  1天/7天/永久（默认永久）；点击「复制链接」创建分享并复制完整 URL 后关闭。
+- 分享页为独立 HTML（`app/share.py` 渲染，样式 `share.css`），接收方输入密码后经
+  `<form method="get" action="download">` 直连下载（文件或 zip），不做 `fetch+blob` 以免大文件撑爆内存。
 
 ## 数据流
 

@@ -42,6 +42,17 @@ def http_get(port: int, path: str):
     return resp.status, headers, body
 
 
+def http_post_json(port: int, path: str, body: dict):
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+    data = json.dumps(body).encode()
+    conn.request("POST", path, body=data, headers={"Content-Type": "application/json"})
+    resp = conn.getresponse()
+    resp_body = resp.read()
+    status = resp.status
+    conn.close()
+    return status, resp_body
+
+
 def http_upload(port: int, filename: str, content: bytes):
     boundary = "----transfer-engine-e2e-boundary"
     body = (
@@ -71,6 +82,7 @@ def main() -> int:
     (shared_dir / "docs").mkdir(exist_ok=True)
     (shared_dir / "hello.txt").write_text("hello", encoding="utf-8")
     chat_db = Path(tempfile.gettempdir()) / f"transfer-engine-e2e-{os.getpid()}.db"
+    shares_db = Path(tempfile.gettempdir()) / f"transfer-engine-e2e-shares-{os.getpid()}.json"
     proc = subprocess.Popen(
         [
             sys.executable,
@@ -82,6 +94,8 @@ def main() -> int:
             str(shared_dir),
             "--chat-db",
             str(chat_db),
+            "--shares-db",
+            str(shares_db),
         ],
         cwd=str(ROOT),
         stdout=log_path.open("wb"),
@@ -138,6 +152,29 @@ def main() -> int:
         print("GET /api/download?path=../README.md ->", status)
         assert status == 400
 
+        # 分享：目录 zip + 分享页
+        status, body = http_post_json(port, "/api/shares", {"path": "docs", "expires": "forever"})
+        print("POST /api/shares (docs) ->", status, body.decode())
+        assert status == 200
+        sid = json.loads(body)["id"]
+        status, _, body = http_get(port, f"/s/{sid}/download")
+        assert status == 200 and body[:2] == b"PK"
+        status, _, body = http_get(port, f"/s/{sid}")
+        assert status == 200 and b"docs" in body
+
+        # 分享：加密 + 时效
+        status, body = http_post_json(
+            port,
+            "/api/shares",
+            {"path": "hello.txt", "encrypted": True, "password": "pw", "expires": "1d"},
+        )
+        print("POST /api/shares (encrypted) ->", status, body.decode())
+        assert status == 200
+        esid = json.loads(body)["id"]
+        assert http_get(port, f"/s/{esid}/download")[0] == 403
+        status, _, body = http_get(port, f"/s/{esid}/download?password=pw")
+        assert status == 200 and body == b"hello"
+
         # WebSocket behavior is covered by unit tests via TestClient; the real
         # server above already exercises HTTP. Skip raw WS here to stay
         # independent of the installed websockets client flavor.
@@ -153,6 +190,7 @@ def main() -> int:
             proc.kill()
         for suffix in ("", "-wal", "-shm"):
             Path(str(chat_db) + suffix).unlink(missing_ok=True)
+        shares_db.unlink(missing_ok=True)
         import shutil
 
         shutil.rmtree(shared_dir, ignore_errors=True)

@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTask
 
@@ -15,15 +15,36 @@ from .chat import ChatRoom, now
 from .chat_store import ChatStore
 from .file_ops import create_dir, delete_path, save_upload
 from .file_tree import build_zip, list_entries, safe_resolve
+from .share import ShareStore, render_share_403, render_share_404, render_share_page
 from .vault import VaultStore
 
 STATIC_DIR = Path(__file__).parent / "static"
+
+
+def _download_response(root: Path, rel: str) -> Response:
+    """按目标类型返回下载响应：目录打包 zip，文件走 FileResponse。"""
+    target = safe_resolve(root, rel)
+    if not target.exists():
+        raise FileNotFoundError("文件不存在")
+    if target.is_dir():
+        fd, tmp_name = tempfile.mkstemp(suffix=".zip")
+        os.close(fd)
+        build_zip(root, rel, Path(tmp_name))
+        safe_name = target.name.replace('"', "_")
+        return Response(
+            content=Path(tmp_name).read_bytes(),
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{safe_name}.zip"'},
+            background=BackgroundTask(os.unlink, tmp_name),
+        )
+    return FileResponse(target, filename=target.name)
 
 
 def create_app(
     shared_dir: Path | str = Path("./shared"),
     chat_db: Path | str | None = None,
     max_upload_size_mb: int = 2048,
+    shares_db: Path | str | None = None,
 ) -> FastAPI:
     shared = Path(shared_dir).expanduser().resolve()
     shared.mkdir(parents=True, exist_ok=True)
@@ -36,6 +57,7 @@ def create_app(
     app.state.chat_db = chat_db
     app.state.max_upload_size_mb = max_upload_size_mb
     app.state.vaults = VaultStore()
+    app.state.shares = ShareStore(shares_db)
 
     def _require_vault(path: str, token: str | None) -> None:
         """若 path 位于加密文件夹内，验证 token；否则无操作。"""
@@ -209,18 +231,7 @@ def create_app(
             kind = "目录" if target.is_dir() else "文件"
             who = request.client.host if request.client else "unknown"
             await system_message(f"{who} 下载了{kind}「{path or '根目录'}」")
-
-            if target.is_dir():
-                fd, tmp_name = tempfile.mkstemp(suffix=".zip")
-                os.close(fd)
-                build_zip(shared, path, Path(tmp_name))
-                return Response(
-                    content=Path(tmp_name).read_bytes(),
-                    media_type="application/zip",
-                    headers={"Content-Disposition": f'attachment; filename="{target.name}.zip"'},
-                    background=BackgroundTask(os.unlink, tmp_name),
-                )
-            return FileResponse(target, filename=target.name)
+            return _download_response(shared, path)
         except Exception as exc:
             who = request.client.host if request.client else "unknown"
             await system_message(f"{who} 下载失败：{exc}")
@@ -276,6 +287,65 @@ def create_app(
             room.disconnect(ws)
             await room.broadcast_presence()
 
+    @app.post("/api/shares")
+    async def create_share(request: Request, payload: dict) -> dict:
+        try:
+            path = str(payload.get("path", "")).strip()
+            encrypted = bool(payload.get("encrypted", False))
+            password = str(payload.get("password", ""))
+            expires = str(payload.get("expires", "forever"))
+            expires_map = {"1d": 1, "7d": 7, "forever": None}
+            if expires not in expires_map:
+                raise ValueError("有效期参数无效")
+            if encrypted and not password:
+                raise ValueError("加密分享需要设置访问密码")
+            vault_token = payload.get("token")
+            _require_vault(path, str(vault_token) if vault_token else None)
+            target = safe_resolve(shared, path)
+            if not target.exists():
+                raise FileNotFoundError("文件不存在")
+            rec = app.state.shares.create(
+                path=path,
+                encrypted=encrypted,
+                password=password,
+                expires_days=expires_map[expires],
+            )
+            return {"id": rec["id"]}
+        except HTTPException:
+            raise
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.get("/s/{share_id}")
+    async def share_page(share_id: str) -> Response:
+        rec = app.state.shares.get(share_id)
+        if rec is None or app.state.shares.is_expired(rec):
+            return HTMLResponse(render_share_404(), status_code=404)
+        try:
+            target = safe_resolve(shared, rec["path"])
+            if not target.exists():
+                return HTMLResponse(render_share_404(), status_code=404)
+        except ValueError:
+            return HTMLResponse(render_share_404(), status_code=404)
+        return HTMLResponse(render_share_page(rec, target))
+
+    @app.get("/s/{share_id}/download")
+    async def share_download(
+        share_id: str,
+        password: str | None = Query(None, max_length=4096),
+    ) -> Response:
+        rec = app.state.shares.get(share_id)
+        if rec is None or app.state.shares.is_expired(rec):
+            return HTMLResponse(render_share_404(), status_code=404)
+        if rec.get("encrypted") and not app.state.shares.check_password(rec, password or ""):
+            return HTMLResponse(render_share_403(share_id), status_code=403)
+        try:
+            return _download_response(shared, rec["path"])
+        except (FileNotFoundError, ValueError):
+            return HTMLResponse(render_share_404(), status_code=404)
+
     if STATIC_DIR.is_dir():
         app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
     return app
@@ -317,6 +387,11 @@ def main() -> None:
         default=2048,
         help="单个上传文件大小上限（MB，默认 2048，即 2G）",
     )
+    parser.add_argument(
+        "--shares-db",
+        default="./data/shares.json",
+        help="分享记录数据库文件（默认 ./data/shares.json）",
+    )
     args = parser.parse_args()
 
     import uvicorn
@@ -327,6 +402,7 @@ def main() -> None:
     print(f"  局域网访问: http://{get_lan_ip()}:{args.port}/")
     print(f"  共享目录:  {Path(args.shared_dir).resolve()}")
     print(f"  聊天记录:  {Path(args.chat_db).resolve()}")
+    print(f"  分享记录:  {Path(args.shares_db).resolve()}")
     print(f"  上传上限:  {args.max_upload_size} MB/文件")
     print("=" * 56)
     uvicorn.run(
@@ -334,6 +410,7 @@ def main() -> None:
             args.shared_dir,
             chat_db=args.chat_db,
             max_upload_size_mb=args.max_upload_size,
+            shares_db=args.shares_db,
         ),
         host=args.host,
         port=args.port,

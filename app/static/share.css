@@ -1,0 +1,121 @@
+/* 独立分享页样式：与主界面同一套深色主题变量 */
+:root {
+  --bg: #0b1017;
+  --panel: #10161f;
+  --panel-2: #0e141c;
+  --line: #1e2a38;
+  --line-strong: #2a3b4f;
+  --text: #d8e2ec;
+  --muted: #8194a8;
+  --accent: #6ee7c8;
+  --accent-dim: #2a5a52;
+  --font-sans: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background:
+    radial-gradient(900px 400px at 12% -8%, rgba(110, 231, 200, 0.10), transparent 60%),
+    radial-gradient(700px 400px at 95% 108%, rgba(226, 178, 106, 0.06), transparent 55%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  padding: 20px;
+}
+
+.share-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 36px 28px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.share-icon {
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--accent);
+  align-items: center;
+  justify-content: center;
+}
+
+.share-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.share-name {
+  margin: 18px 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.share-meta {
+  margin: 0 0 24px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.share-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.share-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  font-family: var(--font-sans);
+}
+
+.share-input:focus {
+  outline: none;
+  border-color: var(--accent-dim);
+}
+
+.share-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent-dim);
+  color: #eafff8;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.share-btn:hover {
+  filter: brightness(1.15);
+}

@@ -20,9 +20,13 @@ function closeOverlay(overlay) {
  *   confirmText 确认按钮文案（默认"确定"）
  *   cancelText  取消按钮文案（默认"取消"）
  *   danger      确认按钮是否为危险样式
- *   switch      是否显示加密开关（与 input 配合使用）
+ *   switch      是否显示加密开关
  *   switchLabel 开关标签文案（默认"加密"）
- *   onSubmit    点击确认时回调；返回 Promise 时按钮会进入 loading，抛出错误则显示在提示区
+ *   pwHint      加密密码输入框提示文案
+ *   radios      分段控件选项 [{value,label,default?}]，选中项计入返回 state.expires
+ *   radiosLabel 分段控件上方标签文案
+ *   onSubmit    点击确认时回调；接收收集到的 state，返回 Promise 时按钮进入 loading，
+ *               抛出错误则显示在状态区
  */
 export function openModal(options = {}) {
   const {
@@ -39,6 +43,9 @@ export function openModal(options = {}) {
     danger = false,
     switch: showSwitch = false,
     switchLabel = "加密",
+    radios = [],
+    radiosLabel = "",
+    pwHint: pwHintText = "设置密码后，接收方需输入密码才能下载",
     onSubmit = null,
   } = options;
 
@@ -90,7 +97,8 @@ export function openModal(options = {}) {
   let pwWrap = null;
   let pwEl = null;
   let pwHint = null;
-  if (showSwitch && input) {
+  let statusEl = null;
+  if (showSwitch) {
     // 加密开关行
     const switchRow = document.createElement("label");
     switchRow.className = "modal-switch-row";
@@ -121,15 +129,56 @@ export function openModal(options = {}) {
     pwWrap.appendChild(pwEl);
     pwHint = document.createElement("p");
     pwHint.className = "modal-hint";
-    pwHint.textContent = "设置密码后只有输入密码才能访问该文件夹";
+    pwHint.textContent = pwHintText;
     pwWrap.appendChild(pwHint);
     body.appendChild(pwWrap);
 
     switchEl.addEventListener("change", () => {
       pwWrap.classList.toggle("hidden", !switchEl.checked);
       pwHint.classList.remove("modal-error");
+      if (statusEl) statusEl.hidden = true;
       if (switchEl.checked) setTimeout(() => pwEl.focus(), 80);
     });
+  }
+
+  // 分段控件（如分享时效：1天 / 7天 / 永久）
+  let radiosEl = null;
+  let selectedValue = null;
+  if (radios && radios.length) {
+    if (radiosLabel) {
+      const labelEl = document.createElement("p");
+      labelEl.className = "modal-radios-label";
+      labelEl.textContent = radiosLabel;
+      body.appendChild(labelEl);
+    }
+    radiosEl = document.createElement("div");
+    radiosEl.className = "modal-radios";
+    const defaultIndex = radios.findIndex((item) => item.default);
+    const startIndex = defaultIndex >= 0 ? defaultIndex : 0;
+    radios.forEach((item, index) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      const isActive = index === startIndex;
+      btn.className = "modal-radio" + (isActive ? " active" : "");
+      btn.textContent = item.label;
+      btn.addEventListener("click", () => {
+        radiosEl.querySelectorAll(".modal-radio").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedValue = item.value;
+        if (statusEl) statusEl.hidden = true;
+      });
+      radiosEl.appendChild(btn);
+      if (isActive) selectedValue = item.value;
+    });
+    body.appendChild(radiosEl);
+  }
+
+  // 无主输入框时，onSubmit 的错误展示区
+  if (onSubmit && !hintEl) {
+    statusEl = document.createElement("p");
+    statusEl.className = "modal-hint modal-error";
+    statusEl.hidden = true;
+    body.appendChild(statusEl);
   }
 
   const actions = document.createElement("div");
@@ -176,6 +225,7 @@ export function openModal(options = {}) {
   document.addEventListener("keydown", onKey);
 
   async function submit() {
+    const state = {};
     if (inputEl) {
       const value = inputEl.value.trim();
       if (!value) {
@@ -186,39 +236,43 @@ export function openModal(options = {}) {
         inputEl.focus();
         return;
       }
-      if (showSwitch && switchEl && switchEl.checked) {
+      state.name = value;
+    }
+    if (showSwitch && switchEl) {
+      state.encrypted = switchEl.checked;
+      if (state.encrypted) {
         if (!pwEl.value) {
           pwHint.textContent = "请输入密码";
           pwHint.classList.add("modal-error");
           pwEl.focus();
           return;
         }
-        close({ name: value, encrypted: true, password: pwEl.value });
-        return;
+        state.password = pwEl.value;
       }
-      if (showSwitch) {
-        close({ name: value, encrypted: false });
-        return;
-      }
-      close(value);
-      return;
     }
+    if (radiosEl) state.expires = selectedValue;
+
     if (!onSubmit) {
-      close(true);
+      if (inputEl) {
+        close(showSwitch ? state : state.name);
+      } else {
+        close(true);
+      }
       return;
     }
     okBtn.disabled = true;
     const original = okBtn.textContent;
     okBtn.textContent = "处理中…";
     try {
-      await onSubmit();
+      await onSubmit(state);
       close(true);
     } catch (error) {
       okBtn.disabled = false;
       okBtn.textContent = original;
-      if (hintEl) {
-        hintEl.textContent = error.message || "操作失败";
-        hintEl.classList.add("modal-error");
+      const el = statusEl || hintEl;
+      if (el) {
+        el.textContent = error.message || "操作失败";
+        el.classList.add("modal-error");
       }
     }
   }

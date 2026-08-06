@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-import hashlib
 import json
-import os
 import secrets
 import threading
 from pathlib import Path
 
 from .file_ops import create_dir
 from .file_tree import VAULT_META_FILE, safe_resolve
+from .passwords import hash_password, verify_password
 
 
 class VaultStore:
@@ -19,19 +18,11 @@ class VaultStore:
         self._sessions: dict[str, str] = {}  # token -> vault_path
         self._lock = threading.Lock()
 
-    @staticmethod
-    def _hash_password(password: str, salt: bytes | None = None) -> tuple[str, str]:
-        """PBKDF2-SHA256 密码哈希，返回 (hash_hex, salt_hex)。"""
-        if salt is None:
-            salt = os.urandom(16)
-        dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 100000)
-        return dk.hex(), salt.hex()
-
     def create_vault(self, root: Path, name: str, parent: str, password: str) -> str:
         """创建加密文件夹并写入 .vault_meta 元数据文件。"""
         rel = create_dir(root, name, parent=parent)
         folder = safe_resolve(root, rel)
-        hash_hex, salt_hex = self._hash_password(password)
+        hash_hex, salt_hex = hash_password(password)
 
         meta = {"hash": hash_hex, "salt": salt_hex}
         (folder / VAULT_META_FILE).write_text(json.dumps(meta))
@@ -46,8 +37,7 @@ class VaultStore:
         meta = self._ensure_loaded(root, path)
         if meta is None:
             return False
-        computed_hash, _ = self._hash_password(password, bytes.fromhex(meta["salt"]))
-        return computed_hash == meta["hash"]
+        return verify_password(password, meta["salt"], meta["hash"])
 
     def issue_token(self, root: Path, path: str) -> str:
         """为已解锁的加密文件夹生成访问令牌。"""
