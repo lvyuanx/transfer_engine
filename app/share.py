@@ -100,16 +100,6 @@ def _page(title: str, body: str) -> str:
 """
 
 
-def render_share_404() -> str:
-    """链接不存在、已过期或文件已被删除时的友好 404 页。"""
-    return _page(
-        "链接已失效",
-        '<h1 class="share-name">链接不存在或已失效</h1>\n'
-        '<p class="share-meta">该分享不存在、已过期或文件已被删除。</p>\n'
-        '<a class="share-btn" href="/">返回首页</a>',
-    )
-
-
 def render_share_401() -> str:
     """加密分享需要访问密码时返回的 401 提示页（Basic Auth 取消/失败后展示）。"""
     return _page(

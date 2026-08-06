@@ -16,7 +16,7 @@ from .chat import ChatRoom, now
 from .chat_store import ChatStore
 from .file_ops import create_dir, delete_path, save_upload, save_upload_path
 from .file_tree import build_zip, list_entries, safe_resolve
-from .share import ShareStore, render_share_401, render_share_404
+from .share import ShareStore, render_share_401
 from .vault import VaultStore
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -353,7 +353,8 @@ def create_app(
         """分享链接：直接返回文件流（文件或目录 zip）；加密分享校验 HTTP Basic 密码。"""
         rec = app.state.shares.get(share_id)
         if rec is None or app.state.shares.is_expired(rec):
-            return HTMLResponse(render_share_404(), status_code=404)
+            # 标准 404（空响应体），让浏览器显示原生 404 页
+            return Response(status_code=404)
         if rec.get("encrypted"):
             password = _basic_password(request.headers.get("authorization"))
             if not app.state.shares.check_password(rec, password or ""):
@@ -365,7 +366,7 @@ def create_app(
         try:
             return _download_response(shared, rec["path"])
         except (FileNotFoundError, ValueError):
-            return HTMLResponse(render_share_404(), status_code=404)
+            return Response(status_code=404)
 
     if STATIC_DIR.is_dir():
         app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")

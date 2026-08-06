@@ -91,15 +91,18 @@ def test_share_expired_returns_404(tmp_path):
     with TestClient(app) as client:
         sid = create_share(client, "a.txt", expires="1d")
         app.state.shares._shares[sid]["created_at"] = "2020-01-01T00:00:00+00:00"
-        assert client.get(f"/s/{sid}").status_code == 404
+        resp = client.get(f"/s/{sid}")
+        assert resp.status_code == 404
+        assert resp.content == b""
 
 
-def test_share_missing_returns_404(tmp_path):
+def test_share_missing_returns_browser_404(tmp_path):
     seed(tmp_path / "shared")
     with TestClient(make_app(tmp_path)) as client:
         resp = client.get("/s/does-not-exist")
         assert resp.status_code == 404
-        assert "已失效" in resp.text
+        # 空响应体，浏览器显示原生 404，不渲染提示页
+        assert resp.content == b""
 
 
 def test_share_traversal_rejected(tmp_path):
