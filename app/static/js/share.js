@@ -36,7 +36,7 @@ async function copyText(text) {
 export function shareEntry(path, name, token) {
   return openModal({
     title: "分享「" + path + "」",
-    message: "生成链接后发给接收方，对方即可下载。",
+    message: "对方打开链接即可直接下载；加密分享会要求输入访问密码。",
     switch: true,
     switchLabel: "是否加密",
     radiosLabel: "有效期",

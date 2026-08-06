@@ -24,13 +24,14 @@ HTTP/WS 请求进入 `create_app()` 的路由；文件请求经 `safe_resolve` �
 ## 分享功能
 
 - 创建分享 `POST /api/shares`：若路径位于加密文件夹内，**必须校验 vault token**，否则会成为绕过加密文件夹密码的通道。
-- 分享下载 `GET /s/{share_id}/download`：**不校验 vault token**（分享即显式授权），只校验分享密码与过期时间；目录打包为 zip。
+- 分享链接 `GET /s/{share_id}`：直接返回文件流（文件或目录 zip，attachment 下载），**不校验 vault token**（分享即显式授权）。
+- 加密分享使用 HTTP Basic Auth：无凭据或密码错误返回 401 + `WWW-Authenticate: Basic`，由浏览器弹原生认证框。
 - 分享 id（`token_urlsafe(12)`）为 bearer 能力，创建分享**不广播系统消息**，避免链接泄露到公共聊天。
 - 分享记录持久化到 `data/shares.json`（CLI `--shares-db` 指定），过期由 `created_at + expires_days` 推导。
 
 ## 注意事项
 
 不得绕过 `safe_resolve`；聊天存储为可选项，`chat_db=None` 时历史接口返回空页；
-分享密码经 GET query 传递、无速率限制，属局域网工具的已知限制。
+分享密码经 Basic Auth 传输（base64，明文信道）、无速率限制，属局域网工具的已知限制。
 上传文件夹时文件名携带相对路径（含 `/`），由 `save_upload_path` 逐级校验并创建目录，
 禁止穿越与隐藏文件；上传结果作为系统消息广播。

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import os
 import socket
 import tempfile
@@ -15,7 +16,7 @@ from .chat import ChatRoom, now
 from .chat_store import ChatStore
 from .file_ops import create_dir, delete_path, save_upload, save_upload_path
 from .file_tree import build_zip, list_entries, safe_resolve
-from .share import ShareStore, render_share_403, render_share_404, render_share_page
+from .share import ShareStore, render_share_401, render_share_404
 from .vault import VaultStore
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -38,6 +39,20 @@ def _download_response(root: Path, rel: str) -> Response:
             background=BackgroundTask(os.unlink, tmp_name),
         )
     return FileResponse(target, filename=target.name)
+
+
+def _basic_password(authorization: str | None) -> str | None:
+    """从 Authorization 头解析 HTTP Basic 凭据，返回密码；无有效凭据返回 None。"""
+    if not authorization:
+        return None
+    scheme, _, rest = authorization.partition(" ")
+    if scheme.lower() != "basic" or not rest:
+        return None
+    try:
+        decoded = base64.b64decode(rest, validate=True).decode("utf-8")
+    except (ValueError, UnicodeDecodeError):
+        return None
+    return decoded.partition(":")[2]
 
 
 def create_app(
@@ -334,28 +349,19 @@ def create_app(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.get("/s/{share_id}")
-    async def share_page(share_id: str) -> Response:
+    async def share_download(request: Request, share_id: str) -> Response:
+        """分享链接：直接返回文件流（文件或目录 zip）；加密分享校验 HTTP Basic 密码。"""
         rec = app.state.shares.get(share_id)
         if rec is None or app.state.shares.is_expired(rec):
             return HTMLResponse(render_share_404(), status_code=404)
-        try:
-            target = safe_resolve(shared, rec["path"])
-            if not target.exists():
-                return HTMLResponse(render_share_404(), status_code=404)
-        except ValueError:
-            return HTMLResponse(render_share_404(), status_code=404)
-        return HTMLResponse(render_share_page(rec, target))
-
-    @app.get("/s/{share_id}/download")
-    async def share_download(
-        share_id: str,
-        password: str | None = Query(None, max_length=4096),
-    ) -> Response:
-        rec = app.state.shares.get(share_id)
-        if rec is None or app.state.shares.is_expired(rec):
-            return HTMLResponse(render_share_404(), status_code=404)
-        if rec.get("encrypted") and not app.state.shares.check_password(rec, password or ""):
-            return HTMLResponse(render_share_403(share_id), status_code=403)
+        if rec.get("encrypted"):
+            password = _basic_password(request.headers.get("authorization"))
+            if not app.state.shares.check_password(rec, password or ""):
+                return HTMLResponse(
+                    render_share_401(),
+                    status_code=401,
+                    headers={"WWW-Authenticate": 'Basic realm="LAN Transfer", charset="UTF-8"'},
+                )
         try:
             return _download_response(shared, rec["path"])
         except (FileNotFoundError, ValueError):

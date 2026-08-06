@@ -1,4 +1,4 @@
-/* 独立分享页样式：与主界面同一套深色主题变量 */
+/* 分享链接失效/需密码提示页样式：与主界面同一套深色主题变量 */
 :root {
   --bg: #0b1017;
   --panel: #10161f;
@@ -47,23 +47,6 @@ body {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
 }
 
-.share-icon {
-  display: inline-flex;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  color: var(--accent);
-  align-items: center;
-  justify-content: center;
-}
-
-.share-icon svg {
-  width: 28px;
-  height: 28px;
-}
-
 .share-name {
   margin: 18px 0 6px;
   font-size: 18px;
@@ -75,29 +58,6 @@ body {
   margin: 0 0 24px;
   font-size: 13px;
   color: var(--muted);
-}
-
-.share-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.share-input {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--line-strong);
-  background: var(--panel-2);
-  color: var(--text);
-  font-size: 14px;
-  letter-spacing: 0.14em;
-  font-family: var(--font-sans);
-}
-
-.share-input:focus {
-  outline: none;
-  border-color: var(--accent-dim);
 }
 
 .share-btn {

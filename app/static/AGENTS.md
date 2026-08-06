@@ -36,8 +36,9 @@
 - 文件树中普通文件/文件夹、已解锁加密文件夹行均有分享按钮（`tree.js` 传入 `getVaultToken(path)`）。
 - 分享弹窗（`js/share.js` + `modal.js` 的 `radios` 分段控件）：加密开关 + 密码输入 + 时效
   1天/7天/永久（默认永久）；点击「复制链接」创建分享并复制完整 URL 后关闭。
-- 分享页为独立 HTML（`app/share.py` 渲染，样式 `share.css`），接收方输入密码后经
-  `<form method="get" action="download">` 直连下载（文件或 zip），不做 `fetch+blob` 以免大文件撑爆内存。
+- 分享链接 `/s/{id}` 直接返回文件流下载（文件或目录 zip），不做 `fetch+blob` 以免大文件撑爆内存；
+  加密分享由后端返回 401 + `WWW-Authenticate: Basic`，浏览器弹原生认证框输入访问密码。
+- `share.css` 仅服务分享链接失效/需密码的提示页样式。
 
 ## 数据流
 

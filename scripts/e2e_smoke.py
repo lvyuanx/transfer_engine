@@ -2,6 +2,7 @@
 then tears everything down. Run with: uv run python scripts/e2e_smoke.py
 """
 
+import base64
 import http.client
 import json
 import os
@@ -32,9 +33,9 @@ def wait_http(port: int, timeout: float = 15.0) -> None:
     raise TimeoutError("server did not become ready")
 
 
-def http_get(port: int, path: str):
+def http_get(port: int, path: str, headers: dict | None = None):
     conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
-    conn.request("GET", path)
+    conn.request("GET", path, headers=headers or {})
     resp = conn.getresponse()
     body = resp.read()
     headers = dict(resp.getheaders())
@@ -158,17 +159,15 @@ def main() -> int:
         print("GET /api/download?path=../README.md ->", status)
         assert status == 400
 
-        # 分享：目录 zip + 分享页
+        # 分享：目录直接返回 zip 文件流
         status, body = http_post_json(port, "/api/shares", {"path": "docs", "expires": "forever"})
         print("POST /api/shares (docs) ->", status, body.decode())
         assert status == 200
         sid = json.loads(body)["id"]
-        status, _, body = http_get(port, f"/s/{sid}/download")
-        assert status == 200 and body[:2] == b"PK"
         status, _, body = http_get(port, f"/s/{sid}")
-        assert status == 200 and b"docs" in body
+        assert status == 200 and body[:2] == b"PK"
 
-        # 分享：加密 + 时效
+        # 分享：加密 + HTTP Basic Auth
         status, body = http_post_json(
             port,
             "/api/shares",
@@ -177,8 +176,9 @@ def main() -> int:
         print("POST /api/shares (encrypted) ->", status, body.decode())
         assert status == 200
         esid = json.loads(body)["id"]
-        assert http_get(port, f"/s/{esid}/download")[0] == 403
-        status, _, body = http_get(port, f"/s/{esid}/download?password=pw")
+        assert http_get(port, f"/s/{esid}")[0] == 401
+        auth = "Basic " + base64.b64encode(b"share:pw").decode()
+        status, _, body = http_get(port, f"/s/{esid}", {"Authorization": auth})
         assert status == 200 and body == b"hello"
 
         # WebSocket behavior is covered by unit tests via TestClient; the real

@@ -7,9 +7,10 @@
 - 创建 PROJECT_AGENTS.md、CLAUDE.md、MEMORY.md、LEARNING.md、WIKI.md。
 - 创建 app、前端、测试与脚本模块 AGENTS.md。
 - 将前端 825 行脚本拆分为 ES Modules，并移除未使用的 httpx2 依赖。
-- 新增「分享」功能：文件/文件夹可生成带时效（1天/7天/永久）的下载链接，支持链接访问密码
-  （分享页输入密码后下载，文件夹下载为 zip）；记录持久化到 `data/shares.json`，重启后仍有效。
-  新增 `app/passwords.py`、`app/share.py`、`js/share.js`、`share.css`。
+- 新增「分享」功能：文件/文件夹可生成带时效（1天/7天/永久）的下载链接，对方访问 `/s/{id}`
+  直接返回文件流下载（文件夹为 zip）；加密分享使用 HTTP Basic Auth（浏览器弹原生认证框）。
+  记录持久化到 `data/shares.json`，重启后仍有效。新增 `app/passwords.py`、`app/share.py`、
+  `js/share.js`、`share.css`。
 - 新增「上传文件夹」功能：工具栏与目录行均有独立「上传文件夹」按钮（`webkitdirectory` 选整个
   文件夹），后端 `save_upload_path` 按相对路径创建子目录并校验，上传结果作为系统消息广播。
 - 单元测试 71 项通过，所有 Python/JavaScript 文件均不超过 500 行。
