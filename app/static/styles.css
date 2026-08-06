@@ -358,6 +358,77 @@ body {
   font-family: var(--font-sans);
 }
 
+/* ---------- switch toggle ---------- */
+
+.modal-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.modal-switch-label {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.modal-switch {
+  position: relative;
+  display: inline-flex;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 99px;
+  background: var(--line-strong);
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.modal-switch:has(.modal-switch-input:checked) {
+  background: var(--accent-dim);
+}
+
+.modal-switch-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.modal-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text);
+  transition: transform 0.2s ease;
+  pointer-events: none;
+}
+
+.modal-switch-input:checked + .modal-switch-knob {
+  transform: translateX(18px);
+  background: var(--accent);
+}
+
+.modal-pw-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.modal-pw-wrap .modal-input {
+  margin-top: 2px;
+}
+
+.modal-pw-wrap .modal-hint {
+  margin: 0 2px 4px;
+}
+
 .empty {
   text-align: center;
   color: var(--muted);

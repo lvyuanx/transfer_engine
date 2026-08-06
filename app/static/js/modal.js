@@ -12,28 +12,33 @@ function closeOverlay(overlay) {
  *   title       弹窗标题
  *   message     正文文本（可选）
  *   input       是否显示输入框（可选，此时返回 Promise<输入值|null>）
+ *   inputType   输入框类型（默认 “text”）
  *   placeholder 输入框占位符
  *   maxLength   输入框最大长度
  *   hint        输入框下方提示
  *   initial     输入框初始值
- *   confirmText 确认按钮文案（默认“确定”）
- *   cancelText  取消按钮文案（默认“取消”）
+ *   confirmText 确认按钮文案（默认”确定”）
+ *   cancelText  取消按钮文案（默认”取消”）
  *   danger      确认按钮是否为危险样式
+ *   switch      是否显示加密开关（与 input 配合使用）
+ *   switchLabel 开关标签文案（默认”加密”）
  *   onSubmit    点击确认时回调；返回 Promise 时按钮会进入 loading，抛出错误则显示在提示区
  */
 export function openModal(options = {}) {
   const {
-    title = "",
-    message = "",
+    title = “”,
+    message = “”,
     input = false,
-    inputType = "text",
-    placeholder = "",
+    inputType = “text”,
+    placeholder = “”,
     maxLength = 200,
-    hint = "",
-    initial = "",
-    confirmText = "确定",
-    cancelText = "取消",
+    hint = “”,
+    initial = “”,
+    confirmText = “确定”,
+    cancelText = “取消”,
     danger = false,
+    switch: showSwitch = false,
+    switchLabel = “加密”,
     onSubmit = null,
   } = options;
 
@@ -78,6 +83,53 @@ export function openModal(options = {}) {
       hintEl.textContent = hint;
       body.appendChild(hintEl);
     }
+  }
+
+  let switchEl = null;
+  let switchTrack = null;
+  let pwWrap = null;
+  let pwEl = null;
+  let pwHint = null;
+  if (showSwitch && input) {
+    // 加密开关行
+    const switchRow = document.createElement("label");
+    switchRow.className = "modal-switch-row";
+    const switchLabelEl = document.createElement("span");
+    switchLabelEl.className = "modal-switch-label";
+    switchLabelEl.textContent = switchLabel;
+    switchTrack = document.createElement("span");
+    switchTrack.className = "modal-switch";
+    switchEl = document.createElement("input");
+    switchEl.type = "checkbox";
+    switchEl.className = "modal-switch-input";
+    switchTrack.appendChild(switchEl);
+    const knob = document.createElement("span");
+    knob.className = "modal-switch-knob";
+    switchTrack.appendChild(knob);
+    switchRow.append(switchLabelEl, switchTrack);
+    body.appendChild(switchRow);
+
+    // 密码输入（默认隐藏）
+    pwWrap = document.createElement("div");
+    pwWrap.className = "modal-pw-wrap hidden";
+    pwEl = document.createElement("input");
+    pwEl.className = "modal-input";
+    pwEl.type = "password";
+    pwEl.placeholder = "输入访问密码";
+    pwEl.maxLength = 128;
+    pwEl.autocomplete = "off";
+    pwWrap.appendChild(pwEl);
+    pwHint = document.createElement("p");
+    pwHint.className = "modal-hint";
+    pwHint.textContent = "设置密码后只有输入密码才能访问该文件夹";
+    pwWrap.appendChild(pwHint);
+    body.appendChild(pwWrap);
+
+    switchEl.addEventListener("change", () => {
+      pwWrap.classList.toggle("hidden", !switchEl.checked);
+      pwHint.classList.remove("modal-error");
+      if (switchEl.checked) setTimeout(() => pwEl.focus(), 80);
+    });
   }
 
   const actions = document.createElement("div");
@@ -132,6 +184,20 @@ export function openModal(options = {}) {
           hintEl.classList.add("modal-error");
         }
         inputEl.focus();
+        return;
+      }
+      if (showSwitch && switchEl && switchEl.checked) {
+        if (!pwEl.value) {
+          pwHint.textContent = "请输入密码";
+          pwHint.classList.add("modal-error");
+          pwEl.focus();
+          return;
+        }
+        close({ name: value, encrypted: true, password: pwEl.value });
+        return;
+      }
+      if (showSwitch) {
+        close({ name: value, encrypted: false });
         return;
       }
       close(value);

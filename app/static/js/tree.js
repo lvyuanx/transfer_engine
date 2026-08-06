@@ -1,13 +1,11 @@
 import { $, fmtSize, getErrorMessage } from "./utils.js";
 import { icon, setIcon } from "./icons.js";
-import { alertModal, confirmModal, promptModal, openModal } from "./modal.js";
+import { alertModal, confirmModal, openModal } from "./modal.js";
 
 const tree = $("tree");
 const empty = $("tree-empty");
 const refresh = $("refresh");
 const newDirectory = $("new-dir");
-const newVault = $("new-vault");
-
 /** 已解锁的加密文件夹 token 缓存，key 为 vault 路径 */
 const vaultTokens = new Map();
 
@@ -72,7 +70,7 @@ function fileIconName(name) {
   return map[ext] || "file";
 }
 
-function promptPassword(title) {
+function passwordPrompt(title) {
   return openModal({
     title,
     input: true,
@@ -140,7 +138,7 @@ function addChildren(item, row, twisty, typeIcon, path, encrypted = false) {
 
     if (encrypted && !vaultTokens.has(path)) {
       // 未解锁：弹出密码输入框
-      const pw = await promptPassword("解锁加密文件夹「" + path + "」");
+      const pw = await passwordPrompt("解锁加密文件夹「" + path + "」");
       if (!pw) return;
       try {
         const resp = await fetch("/api/vaults/unlock", {
@@ -261,38 +259,37 @@ async function addDirectory(parent, name) {
 }
 
 async function createDirectory(parent = "") {
-  const name = await promptModal(
-    parent ? "在「" + parent + "」下新建文件夹" : "新建文件夹",
-    { placeholder: "文件夹名称", hint: "输入文件夹名称，不支持 / 和开头为 . 的名称" }
-  );
-  if (!name) return;
-  addDirectory(parent, name).catch((error) => alertModal("创建失败", error.message));
-}
+  const title = parent ? "在「" + parent + "」下新建文件夹" : "新建文件夹";
+  const result = await openModal({
+    title,
+    input: true,
+    placeholder: "文件夹名称",
+    hint: "输入文件夹名称，不支持 / 和开头为 . 的名称",
+    confirmText: "确定",
+    switch: true,
+    switchLabel: "加密",
+  });
+  if (!result) return;
 
-async function createVault(parent = "") {
-  const name = await promptModal(
-    parent ? "在「" + parent + "」下新建加密文件夹" : "新建加密文件夹",
-    { placeholder: "文件夹名称", hint: "输入文件夹名称" }
-  );
-  if (!name) return;
-  const pw = await promptPassword("为「" + name + "」设置密码");
-  if (!pw) return;
-  try {
-    const body = { name, parent, password: pw };
-    const token = getVaultToken(parent);
-    if (token) body.token = token;
-    const response = await fetch("/api/vaults", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) throw new Error(await getErrorMessage(response, "创建失败"));
-    await loadRoot();
-  } catch (error) {
-    await alertModal("创建失败", error.message);
+  if (result.encrypted) {
+    try {
+      const body = { name: result.name, parent, password: result.password };
+      const token = getVaultToken(parent);
+      if (token) body.token = token;
+      const response = await fetch("/api/vaults", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(await getErrorMessage(response, "创建失败"));
+      await loadRoot();
+    } catch (error) {
+      await alertModal("创建失败", error.message);
+    }
+  } else {
+    addDirectory(parent, result.name).catch((error) => alertModal("创建失败", error.message));
   }
 }
 
 refresh.addEventListener("click", loadRoot);
 newDirectory.addEventListener("click", () => createDirectory());
-if (newVault) newVault.addEventListener("click", () => createVault());
