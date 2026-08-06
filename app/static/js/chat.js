@@ -54,13 +54,21 @@ function nearBottom() {
   return messages.scrollHeight - messages.scrollTop - messages.clientHeight <= 40;
 }
 
+/** 瞬时滚动到底部，避免 scroll-behavior: smooth 的动画在刷新时被打断停在中间。 */
+function scrollToBottom() {
+  const prev = messages.style.scrollBehavior;
+  messages.style.scrollBehavior = "auto";
+  messages.scrollTop = messages.scrollHeight;
+  messages.style.scrollBehavior = prev;
+}
+
 function appendSystem(text) {
   const follow = nearBottom();
   const item = document.createElement("div");
   item.className = "sys";
   item.textContent = text;
   messages.appendChild(item);
-  if (follow) messages.scrollTop = messages.scrollHeight;
+  if (follow) scrollToBottom();
 }
 
 function avatarIndex(name) {
@@ -201,7 +209,7 @@ function appendMessage(message) {
   if (message.id) lastId = Math.max(lastId, message.id);
   const follow = nearBottom();
   messages.appendChild(buildMessage(message));
-  if (follow) messages.scrollTop = messages.scrollHeight;
+  if (follow) scrollToBottom();
 }
 
 function updateIds(history) {
@@ -232,7 +240,8 @@ function initialize(data) {
   data.history.forEach(appendMessage);
   updateIds(data.history);
   moreHistory = data.history.length >= 100;
-  messages.scrollTop = messages.scrollHeight;
+  // 等两帧布局稳定后瞬时滚到底部，刷新时始终定位在最新消息
+  requestAnimationFrame(() => requestAnimationFrame(scrollToBottom));
 }
 
 function updatePresence(count, users) {
