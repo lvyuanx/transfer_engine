@@ -146,11 +146,6 @@ body {
   align-items: center;
 }
 
-.tree-actions .ghost-btn {
-  padding: 5px 8px;
-  font-size: 12px;
-}
-
 #tree-title {
   font-size: 11px;
   letter-spacing: 0.12em;
