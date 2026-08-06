@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <defs>
+    <radialGradient id="gs" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#4a5568"/>
+      <stop offset="100%" stop-color="#1e2a38"/>
+    </radialGradient>
+  </defs>
+  <circle cx="24" cy="24" r="24" fill="url(#gs)"/>
+  <!-- 天线 -->
+  <line x1="24" y1="8" x2="24" y2="3" stroke="#6ee7c8" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="24" cy="2.5" r="1.8" fill="#6ee7c8"/>
+  <!-- 屏幕/面部 -->
+  <rect x="14" y="16" width="20" height="16" rx="4" fill="#1a2332"/>
+  <rect x="16" y="18" width="16" height="12" rx="2" fill="#0d1520"/>
+  <!-- 屏幕内容 - 终端图标 -->
+  <text x="24" y="30" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#6ee7c8">LAN</text>
+  <!-- 指示灯 -->
+  <circle cx="19" cy="38" r="1.5" fill="#6ee7c8"/>
+  <circle cx="24" cy="38" r="1.5" fill="#6ee7c8" opacity="0.6"/>
+  <circle cx="29" cy="38" r="1.5" fill="#6ee7c8" opacity="0.3"/>
+</svg>

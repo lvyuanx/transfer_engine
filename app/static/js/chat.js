@@ -60,7 +60,11 @@ function buildMessage(message) {
   meta.className = "msg-meta";
   const avatar = document.createElement("img");
   avatar.className = "msg-avatar";
-  avatar.src = "/icons/avatars/avatar-" + String(avatarIndex(message.user)).padStart(2, "0") + ".svg";
+  if (message.user === "系统") {
+    avatar.src = "/icons/avatars/avatar-system.svg";
+  } else {
+    avatar.src = "/icons/avatars/avatar-" + String(avatarIndex(message.user)).padStart(2, "0") + ".svg";
+  }
   avatar.alt = message.user;
   avatar.loading = "lazy";
   const user = document.createElement("span");
