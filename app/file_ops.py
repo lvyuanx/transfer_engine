@@ -62,6 +62,33 @@ def save_upload(
     return target.relative_to(safe_resolve(root, "")).as_posix()
 
 
+def save_upload_path(
+    root: Path,
+    dir_rel: str,
+    rel: str,
+    data: bytes,
+    max_size: int = MAX_UPLOAD_SIZE,
+) -> str:
+    """Persist an uploaded file at a nested relative path (folder upload);
+    creates intermediate directories. Returns the path relative to root."""
+    rel = (rel or "").strip().replace("\\", "/").strip("/")
+    parts = [p for p in rel.split("/") if p]
+    if not parts or any(p in (".", "..") for p in parts) or any(p.startswith(".") for p in parts):
+        raise ValueError("无效的文件名")
+    folder = safe_resolve(root, dir_rel)
+    if not folder.is_dir():
+        raise FileNotFoundError("目标目录不存在")
+    if len(data) > max_size:
+        raise ValueError("文件超过大小限制")
+    full_rel = ("/".join(parts) if not dir_rel else dir_rel + "/" + "/".join(parts))
+    target = safe_resolve(root, full_rel)
+    if target.exists():
+        raise ValueError("同名文件已存在")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(data)
+    return target.relative_to(safe_resolve(root, "")).as_posix()
+
+
 def delete_path(root: Path, rel: str) -> str:
     """Delete a file or directory (recursively) and return its relative path."""
     target = safe_resolve(root, rel)

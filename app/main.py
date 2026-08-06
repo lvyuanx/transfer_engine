@@ -13,7 +13,7 @@ from starlette.background import BackgroundTask
 
 from .chat import ChatRoom, now
 from .chat_store import ChatStore
-from .file_ops import create_dir, delete_path, save_upload
+from .file_ops import create_dir, delete_path, save_upload, save_upload_path
 from .file_tree import build_zip, list_entries, safe_resolve
 from .share import ShareStore, render_share_403, render_share_404, render_share_page
 from .vault import VaultStore
@@ -164,17 +164,32 @@ def create_app(
             uploaded: list[str] = []
             for f in files:
                 data = await f.read()
-                rel = save_upload(
-                    shared,
-                    dir,
-                    f.filename or "file",
-                    data,
-                    max_size=max_upload_size_mb * 1024 * 1024,
-                )
+                fname = f.filename or "file"
+                if "/" in fname:
+                    rel = save_upload_path(
+                        shared,
+                        dir,
+                        fname,
+                        data,
+                        max_size=max_upload_size_mb * 1024 * 1024,
+                    )
+                else:
+                    rel = save_upload(
+                        shared,
+                        dir,
+                        fname,
+                        data,
+                        max_size=max_upload_size_mb * 1024 * 1024,
+                    )
                 uploaded.append(rel)
-            names = "」「".join(f.filename or "file" for f in files)
             who = request.client.host if request.client else "unknown"
-            await system_message(f"{who} 上传了文件「{names}」到「{dir or '根目录'}」")
+            prefixes = {Path(rel).parts[0] for rel in uploaded if "/" in rel}
+            if len(uploaded) > 1 and len(prefixes) == 1:
+                folder = prefixes.pop()
+                await system_message(f"{who} 上传了文件夹「{folder}」（{len(uploaded)} 个文件）到「{dir or '根目录'}」")
+            else:
+                names = "」「".join(Path(f.filename or "file").name for f in files)
+                await system_message(f"{who} 上传了文件「{names}」到「{dir or '根目录'}」")
             return {"uploaded": uploaded}
         except Exception as exc:
             who = request.client.host if request.client else "unknown"

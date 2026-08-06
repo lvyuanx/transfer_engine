@@ -1,6 +1,6 @@
 import pytest
 
-from app.file_ops import create_dir, delete_path, save_upload, validate_upload
+from app.file_ops import create_dir, delete_path, save_upload, save_upload_path, validate_upload
 
 
 def test_create_dir_success_and_duplicate(tmp_path):
@@ -75,6 +75,31 @@ def test_save_upload_writes_file(tmp_path):
     saved = save_upload(root, "docs", "a.txt", b"hello", max_size=1024)
     assert saved == "docs/a.txt"
     assert (root / "docs" / "a.txt").read_bytes() == b"hello"
+
+
+def test_save_upload_path_creates_nested_dirs(tmp_path):
+    root = tmp_path / "shared"
+    root.mkdir()
+    saved = save_upload_path(root, "", "docs/sub/a.txt", b"hello", max_size=1024)
+    assert saved == "docs/sub/a.txt"
+    assert (root / "docs" / "sub" / "a.txt").read_bytes() == b"hello"
+
+
+def test_save_upload_path_under_parent(tmp_path):
+    root = tmp_path / "shared"
+    root.mkdir()
+    (root / "base").mkdir()
+    saved = save_upload_path(root, "base", "docs/a.txt", b"x", max_size=1024)
+    assert saved == "base/docs/a.txt"
+    assert (root / "base" / "docs" / "a.txt").is_file()
+
+
+def test_save_upload_path_rejects_traversal_and_hidden(tmp_path):
+    root = tmp_path / "shared"
+    root.mkdir()
+    for bad in ("../a.txt", "a/../../b.txt", ".hidden", "a/.hidden"):
+        with pytest.raises(ValueError):
+            save_upload_path(root, "", bad, b"x", max_size=1024)
 
 
 def test_save_upload_rejects_duplicate(tmp_path):

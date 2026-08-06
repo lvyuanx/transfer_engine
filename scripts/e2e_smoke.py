@@ -128,6 +128,12 @@ def main() -> int:
         assert status == 200
         assert json.loads(body)["uploaded"] == ["smoke.txt"]
 
+        # 文件夹上传：filename 带子目录相对路径
+        status, body = http_upload(port, "folder/sub/data.txt", b"nested")
+        print("POST /api/upload (folder) ->", status, body.decode())
+        assert status == 200
+        assert json.loads(body)["uploaded"] == ["folder/sub/data.txt"]
+
         status, _, body = http_get(port, "/api/messages")
         assert status == 200
         msgs = json.loads(body)["messages"]

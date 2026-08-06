@@ -136,6 +136,48 @@ def test_upload_creates_file_and_system_message(tmp_path):
         assert "docs" in msgs[-1]["text"]
 
 
+def test_upload_folder_creates_nested_structure_and_system_message(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    with TestClient(app) as client:
+        resp = client.post(
+            "/api/upload?dir=",
+            files=[
+                ("files", ("docs/readme.txt", b"hello", "text/plain")),
+                ("files", ("docs/sub/data.txt", b"data", "text/plain")),
+            ],
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert set(data["uploaded"]) == {"docs/readme.txt", "docs/sub/data.txt"}
+        assert (tmp_path / "shared" / "docs" / "readme.txt").read_bytes() == b"hello"
+        assert (tmp_path / "shared" / "docs" / "sub" / "data.txt").read_bytes() == b"data"
+        msgs = client.get("/api/messages").json()["messages"]
+        assert "上传了文件夹「docs」（2 个文件）" in msgs[-1]["text"]
+
+
+def test_upload_folder_into_subdir(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    (tmp_path / "shared" / "base").mkdir(parents=True, exist_ok=True)
+    with TestClient(app) as client:
+        resp = client.post(
+            "/api/upload?dir=base",
+            files=[("files", ("assets/logo.png", b"png", "image/png"))],
+        )
+        assert resp.status_code == 200
+        assert resp.json()["uploaded"] == ["base/assets/logo.png"]
+        assert (tmp_path / "shared" / "base" / "assets" / "logo.png").is_file()
+
+
+def test_upload_folder_rejects_traversal(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    with TestClient(app) as client:
+        resp = client.post(
+            "/api/upload?dir=",
+            files=[("files", ("../evil.txt", b"x", "text/plain"))],
+        )
+        assert resp.status_code == 400
+
+
 def test_upload_failure_returns_400_and_system_message(tmp_path):
     app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
     with TestClient(app) as client:

@@ -10,7 +10,9 @@
 - 新增「分享」功能：文件/文件夹可生成带时效（1天/7天/永久）的下载链接，支持链接访问密码
   （分享页输入密码后下载，文件夹下载为 zip）；记录持久化到 `data/shares.json`，重启后仍有效。
   新增 `app/passwords.py`、`app/share.py`、`js/share.js`、`share.css`。
-- 单元测试 65 项通过，所有 Python/JavaScript 文件均不超过 500 行。
+- 新增「上传文件夹」功能：工具栏新增「上传文件夹」按钮（`webkitdirectory` 选整个文件夹），
+  后端 `save_upload_path` 按相对路径创建子目录并校验，上传结果作为系统消息广播。
+- 单元测试 71 项通过，所有 Python/JavaScript 文件均不超过 500 行。
 
 ## 进行中
 

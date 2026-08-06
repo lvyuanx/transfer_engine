@@ -8,7 +8,7 @@
 
 - `main.py`：应用工厂、全部路由与 CLI 启动。
 - `file_tree.py`：路径安全、目录列表与 zip 构建。
-- `file_ops.py`：上传、建目录、删除。
+- `file_ops.py`：上传（含文件夹嵌套路径 `save_upload_path`）、建目录、删除。
 - `vault.py`：加密文件夹的密码验证与访问令牌。
 - `passwords.py`：PBKDF2-SHA256 密码哈希，vault 与 share 共用。
 - `share.py`：分享记录（JSON 持久化）与独立分享页渲染。
@@ -32,3 +32,5 @@ HTTP/WS 请求进入 `create_app()` 的路由；文件请求经 `safe_resolve` �
 
 不得绕过 `safe_resolve`；聊天存储为可选项，`chat_db=None` 时历史接口返回空页；
 分享密码经 GET query 传递、无速率限制，属局域网工具的已知限制。
+上传文件夹时文件名携带相对路径（含 `/`），由 `save_upload_path` 逐级校验并创建目录，
+禁止穿越与隐藏文件；上传结果作为系统消息广播。

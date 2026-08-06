@@ -7,17 +7,18 @@ const uploadList = $("upload-list");
 const title = $("uploads-title");
 const clear = $("uploads-clear");
 const rootButton = $("upload-root");
+const rootFolderButton = $("upload-folder-root");
 const tree = $("tree");
 let uploading = false;
 
-function buildItem(file) {
+function buildItem(file, label) {
   const item = document.createElement("div");
   item.className = "upload-item";
   const meta = document.createElement("div");
   meta.className = "upload-meta";
   const name = document.createElement("span");
   name.className = "upload-name";
-  name.textContent = file.name;
+  name.textContent = label || file.name;
   const percent = document.createElement("span");
   percent.className = "upload-percent";
   percent.textContent = "0%";
@@ -48,11 +49,12 @@ function buildItem(file) {
   };
 }
 
-function uploadOne(directory, file, view) {
+function uploadOne(directory, file, view, rel = "") {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     const form = new FormData();
-    form.append("files", file);
+    // 文件夹上传时用相对路径（含子目录）作为 filename，后端据此创建目录
+    form.append("files", file, rel || file.name);
     const params = new URLSearchParams();
     if (directory) params.set("dir", directory);
     const token = getVaultToken(directory);
@@ -66,7 +68,7 @@ function uploadOne(directory, file, view) {
   });
 }
 
-async function uploadFiles(directory, selected) {
+async function uploadFiles(directory, selected, folder = false) {
   const files = Array.from(selected || []);
   if (!files.length) return;
   if (uploading) return alertModal("提示", "已有上传正在进行，请等待完成");
@@ -76,10 +78,11 @@ async function uploadFiles(directory, selected) {
   let failed = 0;
   try {
     for (const file of files) {
-      const view = buildItem(file);
+      const rel = folder ? file.webkitRelativePath : "";
+      const view = buildItem(file, rel);
       uploadList.appendChild(view.item);
       try {
-        await uploadOne(directory, file, view);
+        await uploadOne(directory, file, view, rel);
         view.finish();
       } catch (error) {
         failed += 1;
@@ -102,9 +105,18 @@ function chooseFiles(directory) {
   input.click();
 }
 
+function chooseFolder(directory) {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.webkitdirectory = true;
+  input.addEventListener("change", () => uploadFiles(directory, input.files, true));
+  input.click();
+}
+
 clear.addEventListener("click", () => {
   uploadList.querySelectorAll(".done, .error").forEach((item) => item.remove());
   if (!uploadList.children.length) uploads.classList.add("hidden");
 });
 rootButton.addEventListener("click", () => chooseFiles(""));
+rootFolderButton.addEventListener("click", () => chooseFolder(""));
 tree.addEventListener("upload-request", (event) => chooseFiles(event.detail));
