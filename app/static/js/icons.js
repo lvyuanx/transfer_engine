@@ -68,13 +68,18 @@ const SVG = {
     '<rect x="3" y="11" width="18" height="11" rx="2"/>' +
     '<path d="M7 11V7a5 5 0 0 1 10 0v4"/>' +
     '<circle cx="12" cy="16" r="1"/>',
-  share:
-    '<path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/>' +
-    '<path d="M12 8l7 6-7 6"/>' +
-    '<line x1="19" y1="14" x2="5" y2="14"/>',
 };
 
+// 分享图标：直接复用实心填充的参考 SVG（盒子 + 右上飞出箭头），
+// 颜色用 currentColor 随按钮文字色变化，尺寸由 .inline-icon 容器缩放。
+const SHARE_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"' +
+  ' fill="currentColor" aria-hidden="true">' +
+  '<path d="M911.6 651.6l0 209.2c0 36-30.4 66.2-66.2 66.2l-699.6 1.2c-35.8 0-65-29.2-65-65.2l1.2-699.6c0-35.8 30.4-66.2 66.2-66.2l387 0L535.2 20.2 148.2 20.2c-81.8 0-143 82.8-143 156.8l0 686c0 77.6 63 140.8 140.8 140.8l686 0c82 0 156.6-68.2 156.6-143L988.6 651.6 911.6 651.6 911.6 651.6zM730.2 60.8l288.6 289.2L730.2 639l0-165.2c0 0-286.4-31.8-453.6 206.6 0 0 52.6-454.4 453.6-454.4L730.2 60.8 730.2 60.8z"/>' +
+  "</svg>";
+
 function buildSVG(name) {
+  if (name === "share") return SHARE_SVG;
   return (
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"' +
     ' stroke="currentColor" stroke-width="1.8" stroke-linecap="round"' +
