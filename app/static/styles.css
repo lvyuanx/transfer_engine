@@ -219,7 +219,6 @@ body {
   border-radius: 7px;
   color: var(--text);
   text-decoration: none;
-  min-width: max-content;
 }
 
 .tree-row:hover {
@@ -227,6 +226,8 @@ body {
 }
 
 .tree-row .name {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
