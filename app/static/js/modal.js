@@ -23,7 +23,7 @@ function closeOverlay(overlay) {
  *   switch      是否显示加密开关
  *   switchLabel 开关标签文案（默认"加密"）
  *   pwHint      加密密码输入框提示文案
- *   radios      分段控件选项 [{value,label,default?}]，选中项计入返回 state.expires
+ *   radios      分段控件选项 [{value,label,default?}]，选中项计入返回 state.radiosValue
  *   radiosLabel 分段控件上方标签文案
  *   onSubmit    点击确认时回调；接收收集到的 state，返回 Promise 时按钮进入 loading，
  *               抛出错误则显示在状态区
@@ -250,7 +250,7 @@ export function openModal(options = {}) {
         state.password = pwEl.value;
       }
     }
-    if (radiosEl) state.expires = selectedValue;
+    if (radiosEl) state.radiosValue = selectedValue;
 
     if (!onSubmit) {
       if (inputEl) {

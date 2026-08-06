@@ -12,6 +12,7 @@
   新增 `app/passwords.py`、`app/share.py`、`js/share.js`、`share.css`。
 - 新增「上传文件夹」功能：工具栏新增「上传文件夹」按钮（`webkitdirectory` 选整个文件夹），
   后端 `save_upload_path` 按相对路径创建子目录并校验，上传结果作为系统消息广播。
+  目录行上传按钮弹类型选择（文件/文件夹），任意目录均可上传子文件夹。
 - 单元测试 71 项通过，所有 Python/JavaScript 文件均不超过 500 行。
 
 ## 进行中

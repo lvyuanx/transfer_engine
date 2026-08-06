@@ -54,7 +54,7 @@ export function shareEntry(path, name, token) {
           path,
           encrypted: state.encrypted,
           password: state.encrypted ? state.password : "",
-          expires: state.expires,
+          expires: state.radiosValue,
           token: token || undefined,
         }),
       });

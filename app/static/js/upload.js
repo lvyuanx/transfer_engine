@@ -1,6 +1,6 @@
 import { $, fmtSize } from "./utils.js";
 import { loadRoot, getVaultToken } from "./tree.js";
-import { alertModal } from "./modal.js";
+import { alertModal, openModal } from "./modal.js";
 
 const uploads = $("uploads");
 const uploadList = $("upload-list");
@@ -113,10 +113,30 @@ function chooseFolder(directory) {
   input.click();
 }
 
+/** 目录行上传按钮：先选择上传类型（文件 / 文件夹），再打开对应选择器。 */
+function chooseUploadType(directory) {
+  const where = directory ? "「" + directory + "」" : "根目录";
+  return openModal({
+    title: "上传到 " + where,
+    message: "选择要上传的内容类型",
+    radiosLabel: "上传类型",
+    radios: [
+      { value: "files", label: "上传文件", default: true },
+      { value: "folder", label: "上传文件夹" },
+    ],
+    confirmText: "选择",
+    // 在用户手势的同步路径中打开文件/文件夹选择器，避免丢失 user activation
+    onSubmit: (state) => {
+      if (state.radiosValue === "folder") chooseFolder(directory);
+      else chooseFiles(directory);
+    },
+  });
+}
+
 clear.addEventListener("click", () => {
   uploadList.querySelectorAll(".done, .error").forEach((item) => item.remove());
   if (!uploadList.children.length) uploads.classList.add("hidden");
 });
 rootButton.addEventListener("click", () => chooseFiles(""));
 rootFolderButton.addEventListener("click", () => chooseFolder(""));
-tree.addEventListener("upload-request", (event) => chooseFiles(event.detail));
+tree.addEventListener("upload-request", (event) => chooseUploadType(event.detail));
