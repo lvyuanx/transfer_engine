@@ -13,8 +13,9 @@
 - `js/utils.js`：通用格式化工具。
 - `js/tree.js`：文件树和文件操作。
 - `js/upload.js`：XHR 上传和进度。
-- `js/chat.js`：WebSocket 聊天、历史分页和用户名 localStorage 缓存。
+- `js/chat.js`：WebSocket 聊天、历史分页、用户名 localStorage 缓存，以及基于用户名 hash 的随机头像分配（`avatarIndex()`）。
 - `js/modal.js`：统一样式弹窗（提示 / 确认 / 输入），替代浏览器原生弹窗。
+- `icons/avatars/`：10 个 48×48 动物头像 SVG（橘猫、柴犬、狐狸、熊猫、兔子、青蛙、企鹅、仓鼠、猫头鹰、小恐龙），由用户名 hash 映射，同用户头像固定。
 
 ## 数据流
 

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <defs>
+    <radialGradient id="g8" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#fce8c8"/>
+      <stop offset="100%" stop-color="#e8c080"/>
+    </radialGradient>
+  </defs>
+  <circle cx="24" cy="24" r="24" fill="url(#g8)"/>
+  <!-- 耳朵 -->
+  <circle cx="10" cy="13" r="5" fill="#e8c080"/>
+  <circle cx="38" cy="13" r="5" fill="#e8c080"/>
+  <circle cx="10" cy="13" r="3.2" fill="#fcc8d0" opacity="0.6"/>
+  <circle cx="38" cy="13" r="3.2" fill="#fcc8d0" opacity="0.6"/>
+  <!-- 脸部 -->
+  <ellipse cx="24" cy="24" rx="13" ry="11" fill="#fef8f0" opacity="0.5"/>
+  <!-- 眼睛 -->
+  <circle cx="17" cy="23" r="2.2" fill="#3a1d0a"/>
+  <circle cx="31" cy="23" r="2.2" fill="#3a1d0a"/>
+  <circle cx="16.2" cy="22" r="0.8" fill="#fff"/>
+  <circle cx="30.2" cy="22" r="0.8" fill="#fff"/>
+  <!-- 鼻子 -->
+  <ellipse cx="24" cy="28" rx="2" ry="1.5" fill="#f09ea0"/>
+  <!-- 嘴 -->
+  <path d="M21 31 Q24 34 27 31" stroke="#3a1d0a" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+  <!-- 牙齿 -->
+  <rect x="23" y="28.5" width="2" height="2" rx="0.5" fill="#fff"/>
+  <!-- 腮红 -->
+  <circle cx="14" cy="26" r="2.5" fill="#f09ea0" opacity="0.3"/>
+  <circle cx="34" cy="26" r="2.5" fill="#f09ea0" opacity="0.3"/>
+  <!-- 胡须 -->
+  <line x1="10" y1="28" x2="16" y2="28" stroke="#3a1d0a" stroke-width="0.4" opacity="0.25"/>
+  <line x1="32" y1="28" x2="38" y2="28" stroke="#3a1d0a" stroke-width="0.4" opacity="0.25"/>
+</svg>

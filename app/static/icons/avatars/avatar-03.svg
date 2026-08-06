@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <defs>
+    <radialGradient id="g3" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#ff7a3a"/>
+      <stop offset="100%" stop-color="#d44a1a"/>
+    </radialGradient>
+  </defs>
+  <circle cx="24" cy="24" r="24" fill="url(#g3)"/>
+  <!-- 耳朵 -->
+  <polygon points="4,16 12,4 18,12" fill="#d44a1a"/>
+  <polygon points="30,12 36,4 44,16" fill="#d44a1a"/>
+  <polygon points="8,14 13,7 16,12" fill="#fff" opacity="0.5"/>
+  <polygon points="32,12 35,7 40,14" fill="#fff" opacity="0.5"/>
+  <!-- 脸部白斑 -->
+  <path d="M24 18 Q16 18 12 26 Q10 36 24 40 Q38 36 36 26 Q32 18 24 18Z" fill="#fff" opacity="0.88"/>
+  <!-- 眼睛 -->
+  <ellipse cx="17" cy="26" rx="3" ry="3.5" fill="#2d1a0e"/>
+  <ellipse cx="31" cy="26" rx="3" ry="3.5" fill="#2d1a0e"/>
+  <circle cx="18" cy="24.5" r="1.3" fill="#fff"/>
+  <circle cx="32" cy="24.5" r="1.3" fill="#fff"/>
+  <circle cx="16" cy="27" r="0.5" fill="#fff" opacity="0.3"/>
+  <circle cx="30" cy="27" r="0.5" fill="#fff" opacity="0.3"/>
+  <!-- 鼻子 -->
+  <ellipse cx="24" cy="31" rx="2" ry="1.4" fill="#2d1a0e"/>
+  <!-- 嘴 -->
+  <path d="M20 34 Q24 36 28 34" stroke="#2d1a0e" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+</svg>

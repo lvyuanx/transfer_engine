@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <defs>
+    <radialGradient id="g4" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#5a6378"/>
+      <stop offset="100%" stop-color="#2d3344"/>
+    </radialGradient>
+  </defs>
+  <circle cx="24" cy="24" r="24" fill="url(#g4)"/>
+  <!-- 耳朵 -->
+  <ellipse cx="10" cy="15" rx="5" ry="5.5" fill="#1a1a2e"/>
+  <ellipse cx="38" cy="15" rx="5" ry="5.5" fill="#1a1a2e"/>
+  <ellipse cx="11" cy="15.5" rx="3" ry="3.5" fill="#fff" opacity="0.15"/>
+  <ellipse cx="37" cy="15.5" rx="3" ry="3.5" fill="#fff" opacity="0.15"/>
+  <!-- 眼周白 -->
+  <ellipse cx="17" cy="26" rx="7" ry="7" fill="#fff"/>
+  <ellipse cx="31" cy="26" rx="7" ry="7" fill="#fff"/>
+  <!-- 眼睛 -->
+  <ellipse cx="16" cy="25" rx="3.2" ry="3.8" fill="#1a1a2e"/>
+  <ellipse cx="32" cy="25" rx="3.2" ry="3.8" fill="#1a1a2e"/>
+  <circle cx="17" cy="23.5" r="1.5" fill="#fff"/>
+  <circle cx="33" cy="23.5" r="1.5" fill="#fff"/>
+  <circle cx="15" cy="26" r="0.6" fill="#fff" opacity="0.3"/>
+  <circle cx="31" cy="26" r="0.6" fill="#fff" opacity="0.3"/>
+  <!-- 鼻子 -->
+  <ellipse cx="24" cy="31" rx="2.5" ry="2" fill="#1a1a2e"/>
+  <!-- 腮红 -->
+  <circle cx="14" cy="30" r="2.2" fill="#f09ea0" opacity="0.25"/>
+  <circle cx="34" cy="30" r="2.2" fill="#f09ea0" opacity="0.25"/>
+  <!-- 嘴 -->
+  <path d="M20 35 Q24 37 28 35" stroke="#1a1a2e" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+</svg>

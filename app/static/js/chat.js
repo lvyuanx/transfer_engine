@@ -45,11 +45,24 @@ function appendSystem(text) {
   if (follow) messages.scrollTop = messages.scrollHeight;
 }
 
+function avatarIndex(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0;
+  }
+  return (Math.abs(hash) % 10) + 1;
+}
+
 function buildMessage(message) {
   const item = document.createElement("div");
   item.className = "msg" + (message.user === ownName ? " self" : "");
   const meta = document.createElement("div");
   meta.className = "msg-meta";
+  const avatar = document.createElement("img");
+  avatar.className = "msg-avatar";
+  avatar.src = "/icons/avatars/avatar-" + String(avatarIndex(message.user)).padStart(2, "0") + ".svg";
+  avatar.alt = message.user;
+  avatar.loading = "lazy";
   const user = document.createElement("span");
   user.className = "msg-user";
   user.textContent = message.user;
@@ -59,7 +72,7 @@ function buildMessage(message) {
   const text = document.createElement("p");
   text.className = "msg-text";
   text.textContent = message.text;
-  meta.append(user, time);
+  meta.append(avatar, user, time);
   item.append(meta, text);
   return item;
 }

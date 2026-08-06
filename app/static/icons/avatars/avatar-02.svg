@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <defs>
+    <radialGradient id="g2" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#f0c078"/>
+      <stop offset="100%" stop-color="#c88838"/>
+    </radialGradient>
+  </defs>
+  <circle cx="24" cy="24" r="24" fill="url(#g2)"/>
+  <!-- 耳朵 -->
+  <ellipse cx="10" cy="11" rx="6" ry="7" fill="#c88838" transform="rotate(-10 10 11)"/>
+  <ellipse cx="38" cy="11" rx="6" ry="7" fill="#c88838" transform="rotate(10 38 11)"/>
+  <ellipse cx="11" cy="12" rx="4" ry="5" fill="#faf0e0" opacity="0.5"/>
+  <ellipse cx="37" cy="12" rx="4" ry="5" fill="#faf0e0" opacity="0.5"/>
+  <!-- 脸部 -->
+  <ellipse cx="16.5" cy="22" rx="7" ry="7" fill="#fef8f0" opacity="0.35"/>
+  <ellipse cx="31.5" cy="22" rx="7" ry="7" fill="#fef8f0" opacity="0.35"/>
+  <ellipse cx="24" cy="30" rx="10" ry="9" fill="#fef8f0" opacity="0.3"/>
+  <!-- 眼睛 -->
+  <circle cx="16" cy="22" r="2.2" fill="#3a1d0a"/>
+  <circle cx="32" cy="22" r="2.2" fill="#3a1d0a"/>
+  <circle cx="15" cy="21" r="0.9" fill="#fff"/>
+  <circle cx="31" cy="21" r="0.9" fill="#fff"/>
+  <!-- 眉毛 -->
+  <path d="M12 18 Q16 16 19 18" stroke="#3a1d0a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <path d="M29 18 Q32 16 36 18" stroke="#3a1d0a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  <!-- 鼻子 -->
+  <ellipse cx="24" cy="27" rx="3" ry="2" fill="#3a1d0a" opacity="0.7"/>
+  <ellipse cx="24" cy="26.5" rx="1.5" ry="1" fill="#fff" opacity="0.4"/>
+  <!-- 嘴 -->
+  <path d="M18 31 Q24 37 30 31" stroke="#3a1d0a" stroke-width="1" fill="none" stroke-linecap="round"/>
+  <path d="M20 31 Q24 34 28 31" fill="#f09ea0"/>
+  <!-- 腮红 -->
+  <circle cx="14" cy="25" r="2.5" fill="#f09ea0" opacity="0.3"/>
+  <circle cx="34" cy="25" r="2.5" fill="#f09ea0" opacity="0.3"/>
+</svg>

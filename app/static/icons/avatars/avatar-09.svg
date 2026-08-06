@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <defs>
+    <radialGradient id="g9" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#b8966a"/>
+      <stop offset="100%" stop-color="#7a5c40"/>
+    </radialGradient>
+  </defs>
+  <circle cx="24" cy="24" r="24" fill="url(#g9)"/>
+  <!-- 羽冠 -->
+  <path d="M18 4 Q20 0 22 4" fill="#6e4c30"/>
+  <path d="M26 4 Q28 0 30 4" fill="#6e4c30"/>
+  <!-- 面部盘 -->
+  <ellipse cx="24" cy="22" rx="13" ry="11" fill="#f5efe0"/>
+  <ellipse cx="24" cy="22" rx="11" ry="9" fill="#fff"/>
+  <!-- 眼睛 -->
+  <circle cx="17" cy="21" r="4.5" fill="#ffcc00"/>
+  <circle cx="31" cy="21" r="4.5" fill="#ffcc00"/>
+  <circle cx="17" cy="21" r="2.5" fill="#1a1a2e"/>
+  <circle cx="31" cy="21" r="2.5" fill="#1a1a2e"/>
+  <circle cx="17.5" cy="19.5" r="1" fill="#fff"/>
+  <circle cx="31.5" cy="19.5" r="1" fill="#fff"/>
+  <circle cx="16" cy="22" r="0.4" fill="#fff" opacity="0.3"/>
+  <circle cx="30" cy="22" r="0.4" fill="#fff" opacity="0.3"/>
+  <!-- 鸟喙 -->
+  <polygon points="23,26 24,30 25,26" fill="#ffa030"/>
+  <!-- 腮红 -->
+  <circle cx="13" cy="26" r="2" fill="#f09ea0" opacity="0.25"/>
+  <circle cx="35" cy="26" r="2" fill="#f09ea0" opacity="0.25"/>
+</svg>
