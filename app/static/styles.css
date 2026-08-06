@@ -471,6 +471,11 @@ body {
   flex-shrink: 0;
   object-fit: cover;
   background: var(--line);
+  transition: transform 0.15s ease;
+}
+
+.msg.self .msg-avatar:hover {
+  transform: scale(1.15);
 }
 
 .msg-user {

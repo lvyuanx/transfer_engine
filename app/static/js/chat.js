@@ -15,6 +15,7 @@ let moreHistory = false;
 let loading = false;
 
 const STORAGE_KEY = "lan_chat_name";
+const AVATAR_KEY = "lan_chat_avatar";
 
 function cachedName() {
   try {
@@ -30,6 +31,21 @@ function saveName(name) {
   } catch {
     // localStorage 不可用（隐私模式等）时静默失败
   }
+}
+
+function savedAvatar() {
+  try {
+    const v = parseInt(localStorage.getItem(AVATAR_KEY));
+    return v >= 1 && v <= 10 ? v : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveAvatarIndex(n) {
+  try {
+    localStorage.setItem(AVATAR_KEY, String(n));
+  } catch {}
 }
 
 function nearBottom() {
@@ -53,20 +69,42 @@ function avatarIndex(name) {
   return (Math.abs(hash) % 10) + 1;
 }
 
+function avatarSrc(user, isSelf) {
+  if (user === "系统") return "/icons/avatars/avatar-system.svg";
+  if (isSelf) {
+    const saved = savedAvatar();
+    if (saved) return "/icons/avatars/avatar-" + String(saved).padStart(2, "0") + ".svg";
+  }
+  return "/icons/avatars/avatar-" + String(avatarIndex(user)).padStart(2, "0") + ".svg";
+}
+
+function cycleAvatar() {
+  const cur = savedAvatar() || avatarIndex(ownName);
+  const next = cur >= 10 ? 1 : cur + 1;
+  saveAvatarIndex(next);
+  const src = "/icons/avatars/avatar-" + String(next).padStart(2, "0") + ".svg";
+  document.querySelectorAll(".msg.self .msg-avatar").forEach(function (img) {
+    img.src = src;
+  });
+  appendSystem("头像已切换为 #" + next);
+}
+
 function buildMessage(message) {
+  const isSelf = message.user === ownName;
   const item = document.createElement("div");
-  item.className = "msg" + (message.user === ownName ? " self" : "");
+  item.className = "msg" + (isSelf ? " self" : "");
   const meta = document.createElement("div");
   meta.className = "msg-meta";
   const avatar = document.createElement("img");
   avatar.className = "msg-avatar";
-  if (message.user === "系统") {
-    avatar.src = "/icons/avatars/avatar-system.svg";
-  } else {
-    avatar.src = "/icons/avatars/avatar-" + String(avatarIndex(message.user)).padStart(2, "0") + ".svg";
-  }
+  avatar.src = avatarSrc(message.user, isSelf);
   avatar.alt = message.user;
   avatar.loading = "lazy";
+  if (isSelf && message.user !== "系统") {
+    avatar.style.cursor = "pointer";
+    avatar.title = "点击切换头像";
+    avatar.addEventListener("click", cycleAvatar);
+  }
   const user = document.createElement("span");
   user.className = "msg-user";
   user.textContent = message.user;
