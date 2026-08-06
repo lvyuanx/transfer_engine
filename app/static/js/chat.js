@@ -4,6 +4,8 @@ const messages = $("messages");
 const online = $("online");
 const nameInput = $("me");
 const rename = $("rename");
+const avatarBtn = $("avatar-btn");
+const avatarPreview = $("avatar-preview");
 const composer = $("composer");
 const input = $("input");
 let socket;
@@ -78,15 +80,71 @@ function avatarSrc(user, isSelf) {
   return "/icons/avatars/avatar-" + String(avatarIndex(user)).padStart(2, "0") + ".svg";
 }
 
-function cycleAvatar() {
-  const cur = savedAvatar() || avatarIndex(ownName);
-  const next = cur >= 10 ? 1 : cur + 1;
-  saveAvatarIndex(next);
-  const src = "/icons/avatars/avatar-" + String(next).padStart(2, "0") + ".svg";
+function currentAvatar() {
+  return savedAvatar() || avatarIndex(ownName);
+}
+
+function applyAvatar(n) {
+  saveAvatarIndex(n);
+  const src = avatarSrc(ownName, true);
   document.querySelectorAll(".msg.self .msg-avatar").forEach(function (img) {
     img.src = src;
   });
-  appendSystem("头像已切换为 #" + next);
+  if (avatarPreview) avatarPreview.src = src;
+}
+
+function avatarOption(n, active) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "avatar-option" + (active ? " active" : "");
+  btn.title = "头像 #" + n;
+  const img = document.createElement("img");
+  img.src = "/icons/avatars/avatar-" + String(n).padStart(2, "0") + ".svg";
+  img.alt = "头像 #" + n;
+  img.loading = "lazy";
+  btn.appendChild(img);
+  return btn;
+}
+
+/** 弹出头像选择弹窗，点击某个头像即选中并关闭。 */
+function pickAvatar() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  const heading = document.createElement("h2");
+  heading.className = "modal-title";
+  heading.textContent = "更换头像";
+  const body = document.createElement("div");
+  body.className = "modal-body";
+  const text = document.createElement("p");
+  text.className = "modal-text";
+  text.textContent = "选择一个头像作为你的显示头像";
+  body.appendChild(text);
+  const grid = document.createElement("div");
+  grid.className = "avatar-grid";
+  const current = currentAvatar();
+  const buttons = [];
+  for (let n = 1; n <= 10; n++) {
+    const btn = avatarOption(n, n === current);
+    btn.addEventListener("click", () => {
+      applyAvatar(n);
+      closeAvatar(overlay);
+    });
+    buttons.push(btn);
+    grid.appendChild(btn);
+  }
+  body.appendChild(grid);
+  modal.append(heading, body);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  overlay.addEventListener("mousedown", (event) => {
+    if (event.target === overlay) closeAvatar(overlay);
+  });
+}
+
+function closeAvatar(overlay) {
+  overlay.remove();
 }
 
 function buildMessage(message) {
@@ -102,8 +160,8 @@ function buildMessage(message) {
   avatar.loading = "lazy";
   if (isSelf && message.user !== "系统") {
     avatar.style.cursor = "pointer";
-    avatar.title = "点击切换头像";
-    avatar.addEventListener("click", cycleAvatar);
+    avatar.title = "更换头像";
+    avatar.addEventListener("click", pickAvatar);
   }
   const user = document.createElement("span");
   user.className = "msg-user";
@@ -151,6 +209,7 @@ function initialize(data) {
   } else {
     appendSystem("你已连接，默认用户名：" + data.user + "。可在右上角改名。");
   }
+  if (avatarPreview) avatarPreview.src = avatarSrc(ownName, true);
   data.history.forEach(appendMessage);
   updateIds(data.history);
   moreHistory = data.history.length >= 100;
@@ -216,3 +275,4 @@ rename.addEventListener("click", () => {
   appendSystem("你已改名为 " + name);
 });
 nameInput.addEventListener("keydown", (event) => event.key === "Enter" && rename.click());
+if (avatarBtn) avatarBtn.addEventListener("click", pickAvatar);

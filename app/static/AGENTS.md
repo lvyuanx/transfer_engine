@@ -19,6 +19,7 @@
   按 `webkitRelativePath` 保留子目录结构上传；目录行有独立「上传子文件夹」按钮
   （`folder-upload-request` 事件），文件/文件夹均可上传到任意目录。
 - `js/chat.js`：WebSocket 聊天、历史分页、用户名 localStorage 缓存，以及基于用户名 hash 的随机头像分配（`avatarIndex()`）。
+  右上角头像按钮（`avatar-btn`）弹出 10 个头像选择弹窗（`avatar-grid`），点击即选中并持久化到 localStorage；点击自己消息头像同样可更换。
 - `js/modal.js`：统一样式弹窗（提示 / 确认 / 输入 / 分享配置），替代浏览器原生弹窗。支持 `inputType: "password"` 密码输入框、加密开关（`switch`）与分段控件（`radios`）；`onSubmit` 接收收集到的状态对象。
 - `js/share.js`：分享弹窗与链接复制（POST `/api/shares` 后复制完整 URL）。
 - `icons/avatars/`：10 个 48×48 动物头像 SVG（橘猫、柴犬、狐狸、熊猫、兔子、青蛙、企鹅、仓鼠、猫头鹰、小恐龙），由用户名 hash 映射，同用户头像固定。
