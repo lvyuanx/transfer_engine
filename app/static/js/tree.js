@@ -114,6 +114,7 @@ function buildNode(entry) {
     if (isDir) {
       row.append(
         actionButton("upload", "上传到 " + entry.path, () => requestUpload(entry.path)),
+        actionButton("folder-upload", "上传子文件夹到 " + entry.path, () => requestFolderUpload(entry.path)),
         actionButton("new-folder", "在 " + entry.path + " 下新建文件夹", () => createDirectory(entry.path)),
       );
     }
@@ -190,10 +191,11 @@ function rebuildEncryptedRow(item, row, path) {
   const entry = { path, type: "dir", name: path.split("/").pop() };
   const btnDownload = actionButton("download", "下载 " + entry.name, () => download(entry.path, entry.name));
   const btnUpload = actionButton("upload", "上传到 " + entry.path, () => requestUpload(entry.path));
+  const btnFolderUpload = actionButton("folder-upload", "上传子文件夹到 " + entry.path, () => requestFolderUpload(entry.path));
   const btnMkdir = actionButton("new-folder", "在 " + entry.path + " 下新建文件夹", () => createDirectory(entry.path));
   const btnShare = actionButton("share", "分享 " + entry.name, () => shareEntry(entry.path, entry.name, vaultTokens.get(path)));
   const btnDelete = actionButton("delete", "删除 " + entry.path, () => removeEntry(entry), true);
-  row.append(btnDownload, btnUpload, btnMkdir, btnShare, btnDelete);
+  row.append(btnDownload, btnUpload, btnFolderUpload, btnMkdir, btnShare, btnDelete);
 }
 
 export async function loadChildren(path, container, token = null) {
@@ -231,6 +233,10 @@ export async function loadRoot() {
 
 function requestUpload(path) {
   tree.dispatchEvent(new CustomEvent("upload-request", { detail: path }));
+}
+
+function requestFolderUpload(path) {
+  tree.dispatchEvent(new CustomEvent("folder-upload-request", { detail: path }));
 }
 
 async function removeEntry(entry) {

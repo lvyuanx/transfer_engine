@@ -13,9 +13,9 @@
 - `js/icons.js`：图标（含 `folder-upload` 上传文件夹图标；`share` 为实心参考 SVG 独立分支）。
 - `js/utils.js`：通用格式化工具。
 - `js/tree.js`：文件树和文件操作。
-- `js/upload.js`：XHR 上传和进度。工具栏「上传」传文件、「上传文件夹」按钮
-  （`webkitdirectory`）按 `webkitRelativePath` 保留子目录结构上传；目录行上传按钮先弹
-  类型选择（modal radios）再打开对应选择器，文件/文件夹均可上传到任意目录。
+- `js/upload.js`：XHR 上传和进度。工具栏「上传」传文件、「上传文件夹」按钮（`webkitdirectory`）
+  按 `webkitRelativePath` 保留子目录结构上传；目录行有独立「上传子文件夹」按钮
+  （`folder-upload-request` 事件），文件/文件夹均可上传到任意目录。
 - `js/chat.js`：WebSocket 聊天、历史分页、用户名 localStorage 缓存，以及基于用户名 hash 的随机头像分配（`avatarIndex()`）。
 - `js/modal.js`：统一样式弹窗（提示 / 确认 / 输入 / 分享配置），替代浏览器原生弹窗。支持 `inputType: "password"` 密码输入框、加密开关（`switch`）与分段控件（`radios`）；`onSubmit` 接收收集到的状态对象。
 - `js/share.js`：分享弹窗与链接复制（POST `/api/shares` 后复制完整 URL）。
