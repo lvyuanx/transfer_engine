@@ -13,7 +13,7 @@
 - `js/utils.js`：通用格式化工具。
 - `js/tree.js`：文件树和文件操作。
 - `js/upload.js`：XHR 上传和进度。
-- `js/chat.js`：WebSocket 聊天和历史分页。
+- `js/chat.js`：WebSocket 聊天、历史分页和用户名 localStorage 缓存。
 - `js/modal.js`：统一样式弹窗（提示 / 确认 / 输入），替代浏览器原生弹窗。
 
 ## 数据流
@@ -23,4 +23,4 @@
 
 ## 注意事项
 
-用户内容使用 `textContent` 渲染。上传必须保留 XMLHttpRequest，以获得上传进度。
+用户内容使用 `textContent` 渲染。上传必须保留 XMLHttpRequest，以获得上传进度。聊天用户名通过 localStorage（键 `lan_chat_name`）缓存，连接时自动恢复。

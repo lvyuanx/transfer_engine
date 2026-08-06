@@ -14,6 +14,24 @@ let oldestId = 0;
 let moreHistory = false;
 let loading = false;
 
+const STORAGE_KEY = "lan_chat_name";
+
+function cachedName() {
+  try {
+    return localStorage.getItem(STORAGE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function saveName(name) {
+  try {
+    localStorage.setItem(STORAGE_KEY, name);
+  } catch {
+    // localStorage 不可用（隐私模式等）时静默失败
+  }
+}
+
 function nearBottom() {
   return messages.scrollHeight - messages.scrollTop - messages.clientHeight <= 40;
 }
@@ -66,8 +84,18 @@ function initialize(data) {
   username = data.user;
   ownName = data.user;
   nameInput.value = data.user;
-  appendSystem("你已连接，默认用户名：" + data.user + "。可在右上角改名。");
+  // 先按服务端默认名通过 presence 检查，避免缓存名尚未被服务器认同时误清 ownName
   updatePresence(data.online, data.users);
+  const saved = cachedName();
+  if (saved && saved !== data.user) {
+    username = saved;
+    ownName = saved;
+    nameInput.value = saved;
+    socket.send(JSON.stringify({ type: "set_name", name: saved }));
+    appendSystem("你已连接，已恢复上次的用户名：" + saved + "。可在右上角改名。");
+  } else {
+    appendSystem("你已连接，默认用户名：" + data.user + "。可在右上角改名。");
+  }
   data.history.forEach(appendMessage);
   updateIds(data.history);
   moreHistory = data.history.length >= 100;
@@ -128,6 +156,7 @@ rename.addEventListener("click", () => {
   const name = nameInput.value.trim().slice(0, 32);
   if (!name || name === ownName || socket.readyState !== WebSocket.OPEN) return;
   ownName = name;
+  saveName(name);
   socket.send(JSON.stringify({ type: "set_name", name }));
   appendSystem("你已改名为 " + name);
 });
