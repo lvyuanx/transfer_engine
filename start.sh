@@ -122,8 +122,8 @@ nohup "$UV" run python -m app.main "${APP_ARGS[@]}" >>"$LOG_FILE" 2>&1 &
 PID=$!
 echo "$PID" > "$PID_FILE"
 
-# 等待健康检查通过（最多约 30 秒）
-for _ in $(seq 1 60); do
+# 等待健康检查通过（最多约 120 秒，首次 uv 同步依赖可能较慢）
+for _ in $(seq 1 120); do
   if curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null 2>&1; then
     echo "启动成功 (PID $PID)"
     echo "日志: $LOG_FILE"
@@ -135,7 +135,7 @@ for _ in $(seq 1 60); do
     rm -f "$PID_FILE"
     exit 1
   fi
-  sleep 0.5
+  sleep 1
 done
 
 echo "启动超时，请查看日志: $LOG_FILE" >&2
