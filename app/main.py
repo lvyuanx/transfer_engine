@@ -301,9 +301,17 @@ def create_app(
                                 "user": meta["user"],
                                 "text": meta["text"],
                                 "ts": meta["ts"],
+                                "recalled": meta["recalled"],
                                 "time": now(),
                             }
                         )
+                elif kind == "recall":
+                    try:
+                        msg_id = int(data.get("id"))
+                    except (TypeError, ValueError):
+                        continue
+                    if room.recall_message(ws, msg_id):
+                        await room.broadcast({"type": "recalled", "id": msg_id})
                 elif kind == "set_name":
                     name = str(data.get("name", "")).strip()[:32]
                     if name:

@@ -617,6 +617,7 @@ body {
 }
 
 .msg {
+  position: relative;
   max-width: min(760px, 92%);
   padding: 9px 12px 10px;
   border: 1px solid var(--line);
@@ -682,6 +683,36 @@ body {
   line-height: 1.55;
   word-break: break-word;
   white-space: pre-wrap;
+}
+
+.msg-text.msg-recalled {
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* 自己消息的撤回按钮：hover 消息时显示在右上角 */
+.msg-recall {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.msg.self:hover .msg-recall {
+  opacity: 1;
+}
+
+.msg-recall:hover {
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
 .sys {

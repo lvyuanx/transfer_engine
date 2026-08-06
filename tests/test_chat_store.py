@@ -8,11 +8,21 @@ def test_append_returns_message_with_incrementing_ids(tmp_path):
     store = ChatStore(tmp_path / "chat.db")
     m1 = store.append("alice", "hello")
     m2 = store.append("bob", "hi")
-    assert m1 == {"id": 1, "user": "alice", "text": "hello", "ts": m1["ts"]}
+    assert m1 == {"id": 1, "user": "alice", "text": "hello", "ts": m1["ts"], "recalled": False}
     assert m2["id"] == 2
     assert m2["user"] == "bob"
     assert m2["text"] == "hi"
-    assert set(m2) == {"id", "user", "text", "ts"}
+    assert set(m2) == {"id", "user", "text", "ts", "recalled"}
+    store.close()
+
+
+def test_recall_marks_only_own_message(tmp_path):
+    store = ChatStore(tmp_path / "chat.db")
+    m = store.append("alice", "secret")
+    assert store.recall(m["id"], "bob") is False
+    assert store.recent(10)[0]["recalled"] == 0
+    assert store.recall(m["id"], "alice") is True
+    assert store.recent(10)[0]["recalled"] == 1
     store.close()
 
 

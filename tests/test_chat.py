@@ -106,6 +106,66 @@ def test_chat_message_has_incrementing_id_and_ts(tmp_path):
             assert echoed["ts"] >= msg["ts"]
 
 
+def test_chat_message_includes_recalled_flag(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    with TestClient(app, client=CLIENT) as client:
+        with client.websocket_connect("/ws/chat") as ws1, client.websocket_connect("/ws/chat") as ws2:
+            ws1.receive_json()
+            ws2.receive_json()
+            ws1.receive_json()
+
+            ws1.send_json({"type": "chat", "text": "hello"})
+            msg = ws2.receive_json()
+            assert msg["recalled"] is False
+            ws1.receive_json()  # 自己的回显
+
+
+def test_recall_own_message_broadcasts_and_persists(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    with TestClient(app, client=CLIENT) as client:
+        with client.websocket_connect("/ws/chat") as ws1, client.websocket_connect("/ws/chat") as ws2:
+            ws1.receive_json()
+            ws2.receive_json()
+            ws1.receive_json()
+
+            ws1.send_json({"type": "set_name", "name": "alice"})
+            ws2.receive_json()  # presence
+
+            ws1.send_json({"type": "chat", "text": "secret"})
+            msg = ws2.receive_json()
+            assert msg["user"] == "alice"
+            ws1.receive_json()  # 自己回显
+
+            ws1.send_json({"type": "recall", "id": msg["id"]})
+            recalled = ws2.receive_json()
+            assert recalled["type"] == "recalled"
+            assert recalled["id"] == msg["id"]
+
+            # 历史中该消息已被标记撤回
+            history = app.state.room.history()
+            assert history[-1]["id"] == msg["id"]
+            assert history[-1]["recalled"] == 1
+
+
+def test_cannot_recall_others_message(tmp_path):
+    app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
+    with TestClient(app, client=CLIENT) as client:
+        with client.websocket_connect("/ws/chat") as ws1, client.websocket_connect("/ws/chat") as ws2:
+            ws1.receive_json()
+            ws2.receive_json()
+            ws1.receive_json()
+
+            ws1.send_json({"type": "chat", "text": "from alice"})
+            ws2.receive_json()  # ws2 收到
+            ws1.receive_json()  # ws1 自己回显
+
+            # ws2 尝试撤回 ws1 的消息（ws2 用户名不同）
+            ws2.send_json({"type": "recall", "id": 1})
+            # 无广播：ws1 不应收到 recalled 事件。直接查库确认未标记。
+            history = app.state.room.history()
+            assert history[-1]["recalled"] == 0
+
+
 def test_file_operation_system_message_is_broadcast_immediately(tmp_path):
     app = create_app(tmp_path / "shared", chat_db=tmp_path / "chat.db")
     room = app.state.room

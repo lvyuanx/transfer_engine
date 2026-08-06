@@ -68,7 +68,14 @@ class ChatRoom:
             "user": user,
             "text": text,
             "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "recalled": False,
         }
+
+    def recall_message(self, ws: WebSocket, msg_id: int) -> bool:
+        """撤回当前连接用户自己的消息；归属不匹配时返回 False。"""
+        if self._store is None:
+            return False
+        return self._store.recall(msg_id, self.username(ws))
 
     async def broadcast(self, payload: dict, exclude: WebSocket | None = None) -> None:
         for ws in list(self._clients):

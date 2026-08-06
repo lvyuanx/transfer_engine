@@ -151,6 +151,7 @@ function buildMessage(message) {
   const isSelf = message.user === ownName;
   const item = document.createElement("div");
   item.className = "msg" + (isSelf ? " self" : "");
+  if (message.id) item.dataset.id = message.id;
   const meta = document.createElement("div");
   meta.className = "msg-meta";
   const avatar = document.createElement("img");
@@ -171,9 +172,27 @@ function buildMessage(message) {
   time.textContent = message.time || fmtTime(message.ts);
   const text = document.createElement("p");
   text.className = "msg-text";
-  text.textContent = message.text;
+  if (message.recalled) {
+    text.textContent = "（消息已撤回）";
+    text.classList.add("msg-recalled");
+  } else {
+    text.textContent = message.text;
+  }
   meta.append(avatar, user, time);
   item.append(meta, text);
+  // 自己发出的未撤回消息：hover 显示撤回按钮
+  if (isSelf && message.user !== "系统" && !message.recalled && message.id) {
+    const recall = document.createElement("button");
+    recall.type = "button";
+    recall.className = "msg-recall";
+    recall.textContent = "撤回";
+    recall.title = "撤回这条消息";
+    recall.addEventListener("click", () => {
+      if (!socket || socket.readyState !== WebSocket.OPEN) return;
+      socket.send(JSON.stringify({ type: "recall", id: message.id }));
+    });
+    item.appendChild(recall);
+  }
   return item;
 }
 
@@ -242,6 +261,20 @@ async function loadOlder() {
   }
 }
 
+/** 收到撤回广播后：把该消息文本替换为「（消息已撤回）」，并移除撤回按钮。 */
+function handleRecalled(msgId) {
+  messages.querySelectorAll(".msg").forEach((item) => {
+    if (Number(item.dataset.id) !== Number(msgId)) return;
+    const text = item.querySelector(".msg-text");
+    if (text) {
+      text.textContent = "（消息已撤回）";
+      text.classList.add("msg-recalled");
+    }
+    const recall = item.querySelector(".msg-recall");
+    if (recall) recall.remove();
+  });
+}
+
 export function connectChat() {
   const protocol = location.protocol === "https:" ? "wss" : "ws";
   socket = new WebSocket(protocol + "://" + location.host + "/ws/chat");
@@ -250,6 +283,7 @@ export function connectChat() {
     if (data.type === "init") initialize(data);
     else if (data.type === "presence") updatePresence(data.online, data.users);
     else if (data.type === "message") appendMessage(data);
+    else if (data.type === "recalled") handleRecalled(data.id);
   };
   socket.onclose = () => {
     appendSystem("连接断开，正在重连…");

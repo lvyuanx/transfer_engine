@@ -12,8 +12,8 @@
 - `vault.py`：加密文件夹的密码验证与访问令牌。
 - `passwords.py`：PBKDF2-SHA256 密码哈希，vault 与 share 共用。
 - `share.py`：分享记录（JSON 持久化）与独立分享页渲染。
-- `chat.py`：WebSocket 连接、广播和在线状态。
-- `chat_store.py`：聊天消息 SQLite 存储和分页。
+- `chat.py`：WebSocket 连接、广播、在线状态与消息撤回（`recall_message`）。
+- `chat_store.py`：聊天消息 SQLite 存储、分页与撤回标记（`recalled` 列）。
 - `static/`：前端静态资源。
 
 ## 数据流
