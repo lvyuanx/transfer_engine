@@ -12,7 +12,8 @@
 - `app.js`：模块入口，只负责启动。
 - `js/icons.js`：图标（含 `folder-upload` 上传文件夹图标；`share` 为实心参考 SVG 独立分支）。
 - `js/utils.js`：通用格式化工具。
-- `js/tree.js`：文件树和文件操作。
+- `js/tree.js`：文件树和文件操作。仅文件行提供下载按钮，文件夹行暂不提供下载
+  （曾以 zip 形式下载，待后续重做为递归下载方案）。
 - `js/upload.js`：XHR 上传和进度。工具栏「上传」传文件、「上传文件夹」按钮（`webkitdirectory`）
   按 `webkitRelativePath` 保留子目录结构上传；目录行有独立「上传子文件夹」按钮
   （`folder-upload-request` 事件），文件/文件夹均可上传到任意目录。

@@ -11,6 +11,7 @@
   直接返回文件流下载（文件夹为 zip）；加密分享使用 HTTP Basic Auth（浏览器弹原生认证框）。
   记录持久化到 `data/shares.json`，重启后仍有效。新增 `app/passwords.py`、`app/share.py`、
   `js/share.js`、`share.css`。
+- 文件树中文件夹行暂不提供下载按钮（原 zip 下载已隐藏，待重做为递归下载方案）。
 - 新增「上传文件夹」功能：工具栏与目录行均有独立「上传文件夹」按钮（`webkitdirectory` 选整个
   文件夹），后端 `save_upload_path` 按相对路径创建子目录并校验，上传结果作为系统消息广播。
 - 单元测试 71 项通过，所有 Python/JavaScript 文件均不超过 500 行。
