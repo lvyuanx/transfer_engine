@@ -12,33 +12,33 @@ function closeOverlay(overlay) {
  *   title       弹窗标题
  *   message     正文文本（可选）
  *   input       是否显示输入框（可选，此时返回 Promise<输入值|null>）
- *   inputType   输入框类型（默认 “text”）
+ *   inputType   输入框类型（默认 "text"）
  *   placeholder 输入框占位符
  *   maxLength   输入框最大长度
  *   hint        输入框下方提示
  *   initial     输入框初始值
- *   confirmText 确认按钮文案（默认”确定”）
- *   cancelText  取消按钮文案（默认”取消”）
+ *   confirmText 确认按钮文案（默认"确定"）
+ *   cancelText  取消按钮文案（默认"取消"）
  *   danger      确认按钮是否为危险样式
  *   switch      是否显示加密开关（与 input 配合使用）
- *   switchLabel 开关标签文案（默认”加密”）
+ *   switchLabel 开关标签文案（默认"加密"）
  *   onSubmit    点击确认时回调；返回 Promise 时按钮会进入 loading，抛出错误则显示在提示区
  */
 export function openModal(options = {}) {
   const {
-    title = “”,
-    message = “”,
+    title = "",
+    message = "",
     input = false,
-    inputType = “text”,
-    placeholder = “”,
+    inputType = "text",
+    placeholder = "",
     maxLength = 200,
-    hint = “”,
-    initial = “”,
-    confirmText = “确定”,
-    cancelText = “取消”,
+    hint = "",
+    initial = "",
+    confirmText = "确定",
+    cancelText = "取消",
     danger = false,
     switch: showSwitch = false,
-    switchLabel = “加密”,
+    switchLabel = "加密",
     onSubmit = null,
   } = options;
 
