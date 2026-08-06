@@ -69,9 +69,9 @@ const SVG = {
     '<path d="M7 11V7a5 5 0 0 1 10 0v4"/>' +
     '<circle cx="12" cy="16" r="1"/>',
   share:
-    '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>' +
-    '<polyline points="16 6 12 2 8 6"/>' +
-    '<line x1="12" y1="2" x2="12" y2="15"/>',
+    '<path d="M3 10v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-9"/>' +
+    '<path d="M14 7l6 5-6 5"/>' +
+    '<line x1="20" y1="12" x2="6" y2="12"/>',
 };
 
 function buildSVG(name) {
