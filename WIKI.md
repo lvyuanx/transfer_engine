@@ -14,3 +14,10 @@
 
 WebSocket 初始化消息为 `init`，实时消息为 `message`，在线列表为 `presence`；客户端可发送
 `chat` 和 `set_name`。
+
+## 启动/停止脚本
+
+`start.sh` 记录到 PID 文件的是 **uv 父进程**，而真正绑定端口的是其 **python 子进程**
+（`uv run` 不会 exec 替换自身）。因此 `stop.sh` 不能仅以主进程退出作为停止成功的标志，
+必须等待端口真正释放，并按端口特征（`app.main`）清理残留子进程；`cleanup_residue`
+兜底扫描系统中所有本服务残留进程，避免端口被占时 start 拒绝启动且无 PID 文件可清的死锁。

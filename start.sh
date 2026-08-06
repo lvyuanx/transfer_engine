@@ -112,7 +112,8 @@ fi
 
 # 端口已被其他进程占用时不再重复拉起
 if curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null 2>&1; then
-  echo "端口 $PORT 已有服务在运行（非本脚本管理），请先停止该服务或改用其他端口" >&2
+  echo "端口 $PORT 已有服务在运行，请先执行 ./stop.sh 或改用其他端口" >&2
+  echo "若 stop.sh 无法清理，可用 lsof -iTCP:$PORT -sTCP:LISTEN 排查占用进程" >&2
   exit 1
 fi
 
